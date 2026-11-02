@@ -104,3 +104,28 @@ test('the workflow never invokes a real Jev API or publishes content', async () 
   const repeated = await workflow.resumeSegment('sample-001', { authorized: true, maxJevCalls: 2 });
   assert.equal(repeated.jevCalls, 2); // no duplicate paid-looking calls on an approved result
 });
+
+
+test('exhausted per-segment judge-call cap holds rather than publishing', async () => {
+  const seen: string[] = [];
+  const workflow = new TranslationWorkflow([source], {
+    judge: { evaluate: async (req: GateRequest) => { seen.push(req.gate); return req.gate === 'G2' ? passG2() : g3(0.99); } },
+    writer: { rewritePlain: async () => ({ plain: 'Sao Tử Vi nằm ở cung Mệnh.', claims: [{ id: 'cl1', kind: 'SOURCE_GROUNDED' as const, text: 'Sao Tử Vi nằm ở cung Mệnh.', sourceSpan: zh }] }) },
+  });
+  const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 2 });
+  assert.equal(result.status, 'HUMAN_HOLD');
+  assert.equal(result.reason, 'G3_JEV_UNAVAILABLE_OR_BUDGET');
+  assert.deepEqual(seen, ['G2', 'G3']);
+});
+
+test('source hash mismatch blocks before judge', async () => {
+  let called = false;
+  const workflow = new TranslationWorkflow([{ ...source, sourceSha: 'tampered' }], {
+    judge: { evaluate: async () => { called = true; return passG2(); } },
+    writer: { rewritePlain: async () => { throw new Error('should not rewrite'); } },
+  });
+  const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 2 });
+  assert.equal(result.reason, 'INVALID_SOURCE_OR_CLAIMS');
+  assert.equal(result.status, 'HUMAN_HOLD');
+  assert.equal(called, false);
+});
