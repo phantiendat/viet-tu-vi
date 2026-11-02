@@ -39,3 +39,17 @@ Add deterministic `GatePolicy` as a pure function and a source-grounded `ClaimAl
 ## Review constraints
 
 Use Matt Pocock `codebase-design`, `tdd`, `code-review` (Standards + Spec) criteria. Any future real Jev-web charge must be approved for the specific test batch. Current PR changes no chart engine, weather/date, translation dataset, external licenses, or `main`.
+
+## T01-EXT — Expanded error gate following owner removal of Jev-web rate limits (2026-11-02)
+
+**Confirmed read-only via `jev_status`:** `ready=true`, `rate_limiting_enabled=false`, `limits.requests_per_minute=null`, `limits.requests_per_utc_day=null`. The old 6/min and 60/day are historical settings, not active rules. Upstream provider 429/network failures are still possible.
+
+**Implementation added on this PR branch (not merged):**
+
+- Removed implicit hard cap `min(grant.maxJevCalls, 7)`; now `grant.maxJevCalls` is the authorized **application-controlled** ceiling and `maxPlainRevisions` may be increased explicitly per grant (default 3).
+- `BLOCKED` for immutable source/hash corruption; `REWORK_REQUIRED` for invalid generated text or claim references; `RETRYABLE_HOLD` for provider 429/timeout/unavailable and one malformed typed response; `HUMAN_HOLD` for auth/config errors, duplicate broken payloads and exhausted user-authorized budget.
+- Provider `Retry-After` metadata is surfaced to the caller but **no automatic scheduler/background retry** is implemented. A new `resumeSegment` invocation requires a still-valid grant.
+- Counter and evidence are still **in-memory**; durable ledger, real Jev adapter, idempotent concurrency, full model schema adaptation and independent release guard remain **not implemented**. All statuses remain non-publishing.
+- Expanded the test suite from 9 to **15 test cases** (including >7 permitted mock calls, 429, INVALID_RESPONSE, source tampering, repairable claims and AUTH). These 6 additional cases **have not been executed in this session**: there are zero GitHub Actions workflow runs accessible for this repo at time of inspection, and the container has no network access for cloning. Do not claim 15/15 PASS without a real test log.
+
+**Next verification before merge:** run `npm ci && npm run typecheck && npm test && npm run build` on a machine with the repository, record command outputs/commit SHA, and challenge the error gate with a fake adapter. Real paid Jev calls are not needed for these tests.
