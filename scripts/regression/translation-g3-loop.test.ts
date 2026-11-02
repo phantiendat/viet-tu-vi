@@ -127,7 +127,6 @@ test('source hash mismatch blocks before judge', async () => {
   const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 2 });
   assert.equal(result.reason, 'SOURCE_INTEGRITY_BLOCK');
   assert.equal(result.status, 'BLOCKED');
-  assert.equal(result.status, 'HUMAN_HOLD');
   assert.equal(called, false);
 });
 
