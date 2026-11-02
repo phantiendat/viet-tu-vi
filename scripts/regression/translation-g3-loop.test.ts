@@ -195,6 +195,9 @@ test('invalid Jev score shape gets one explicit retry before human escalation', 
   assert.equal(second.status, 'HUMAN_HOLD');
   assert.equal(second.reason, 'G2_INVALID_JEV_RESPONSE');
   assert.equal(calls, 2);
+  const third = await wf.resumeSegment('sample-001', grant);
+  assert.equal(third.status, 'HUMAN_HOLD');
+  assert.equal(calls, 2); // no automatic third charge on the same broken schema
 });
 
 test('source-integrity failure is blocked while incomplete translation claims request repair', async () => {
@@ -219,4 +222,21 @@ test('auth error stops for human action, not a blind retry loop', async () => {
   assert.equal(r.status, 'HUMAN_HOLD');
   assert.equal(r.reason, 'JEV_AUTH');
   assert.equal(r.jevCalls, 1);
+});
+
+
+test('explicit Jev INVALID_RESPONSE errors are retryable once and then require human repair', async () => {
+  let calls = 0;
+  const wf = new TranslationWorkflow([source], {
+    judge: { evaluate: async () => {
+      calls++;
+      throw new JudgeServiceError('INVALID_RESPONSE', 'provider JSON schema changed');
+    } },
+    writer: { rewritePlain: async () => { throw Error('not used'); } }
+  });
+  const grant = { authorized: true, maxJevCalls: 10 };
+  assert.equal((await wf.processSegment('sample-001', grant)).status, 'RETRYABLE_HOLD');
+  assert.equal((await wf.resumeSegment('sample-001', grant)).status, 'HUMAN_HOLD');
+  assert.equal((await wf.resumeSegment('sample-001', grant)).status, 'HUMAN_HOLD');
+  assert.equal(calls, 2);
 });
