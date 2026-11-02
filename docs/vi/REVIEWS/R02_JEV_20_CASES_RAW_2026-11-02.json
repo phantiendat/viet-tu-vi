@@ -6,8 +6,9 @@
   "threshold_policy": {
     "risk_ge_flag": 0.7,
     "risk_le_clear": 0.3,
+    "ambiguity_ge_human_hold": 0.3,
     "intermediate": "REVIEW",
-    "known_ambiguity": "HUMAN_HOLD_OVERRIDES_JEV",
+    "priority": "if ambiguity_noul>=0.3 -> HUMAN_HOLD; else risk>=0.7 FLAG; else risk<=0.3 CLEAR; else REVIEW",
     "calibrated": false,
     "production_release_permitted": false
   },
@@ -21,12 +22,14 @@
     "issues_flagged": 9,
     "issues_review": 0,
     "issues_cleared": 0,
+    "issues_held": 0,
     "clean_cleared": 8,
     "clean_review": 0,
     "clean_flagged": 0,
+    "clean_held": 0,
     "holds_manual": 3,
-    "cost_usd": 0.000253722,
-    "request_count": 4
+    "cost_usd": 0.000409626,
+    "request_count": 7
   },
   "predictions": [
     {
@@ -35,7 +38,7 @@
       "expected": "CLEAN",
       "fault": "none",
       "risk_noul": 0.12,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.05,
       "triage": "CLEAR",
       "correct_for_seeded_labels": true
     },
@@ -45,7 +48,7 @@
       "expected": "CLEAN",
       "fault": "none",
       "risk_noul": 0.03,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "CLEAR",
       "correct_for_seeded_labels": true
     },
@@ -55,7 +58,7 @@
       "expected": "CLEAN",
       "fault": "none",
       "risk_noul": 0.04,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "CLEAR",
       "correct_for_seeded_labels": true
     },
@@ -65,7 +68,7 @@
       "expected": "CLEAN",
       "fault": "none",
       "risk_noul": 0.02,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.05,
       "triage": "CLEAR",
       "correct_for_seeded_labels": true
     },
@@ -75,7 +78,7 @@
       "expected": "ISSUE",
       "fault": "negation_inverted",
       "risk_noul": 1,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -85,7 +88,7 @@
       "expected": "ISSUE",
       "fault": "star_swapped",
       "risk_noul": 1,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -95,7 +98,7 @@
       "expected": "ISSUE",
       "fault": "negation_inverted",
       "risk_noul": 1,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -105,7 +108,7 @@
       "expected": "ISSUE",
       "fault": "clause_omitted",
       "risk_noul": 1,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.07,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -115,7 +118,7 @@
       "expected": "HOLD",
       "fault": "ambiguous_classical_term",
       "risk_noul": 0.12,
-      "ambiguity_noul": 0.55,
+      "ambiguity_noul": 0.76,
       "triage": "HUMAN_HOLD",
       "correct_for_seeded_labels": true
     },
@@ -125,7 +128,7 @@
       "expected": "HOLD",
       "fault": "disputed_historical_reading",
       "risk_noul": 0.17,
-      "ambiguity_noul": 0.68,
+      "ambiguity_noul": 0.79,
       "triage": "HUMAN_HOLD",
       "correct_for_seeded_labels": true
     },
@@ -135,7 +138,7 @@
       "expected": "CLEAN",
       "fault": "none",
       "risk_noul": 0.04,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "CLEAR",
       "correct_for_seeded_labels": true
     },
@@ -145,7 +148,7 @@
       "expected": "CLEAN",
       "fault": "none",
       "risk_noul": 0.02,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.05,
       "triage": "CLEAR",
       "correct_for_seeded_labels": true
     },
@@ -155,7 +158,7 @@
       "expected": "CLEAN",
       "fault": "none",
       "risk_noul": 0.03,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "CLEAR",
       "correct_for_seeded_labels": true
     },
@@ -165,7 +168,7 @@
       "expected": "CLEAN",
       "fault": "none",
       "risk_noul": 0.04,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.05,
       "triage": "CLEAR",
       "correct_for_seeded_labels": true
     },
@@ -175,7 +178,7 @@
       "expected": "ISSUE",
       "fault": "unsupported_prediction",
       "risk_noul": 0.99,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.05,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -185,7 +188,7 @@
       "expected": "ISSUE",
       "fault": "negation_inverted",
       "risk_noul": 1,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -195,7 +198,7 @@
       "expected": "ISSUE",
       "fault": "star_swapped",
       "risk_noul": 1,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -205,7 +208,7 @@
       "expected": "ISSUE",
       "fault": "clause_omitted",
       "risk_noul": 0.99,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.05,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -215,7 +218,7 @@
       "expected": "ISSUE",
       "fault": "unsupported_prediction",
       "risk_noul": 1,
-      "ambiguity_noul": null,
+      "ambiguity_noul": 0.04,
       "triage": "FLAG",
       "correct_for_seeded_labels": true
     },
@@ -225,7 +228,7 @@
       "expected": "HOLD",
       "fault": "ambiguous_classical_term",
       "risk_noul": 0.15,
-      "ambiguity_noul": 0.48,
+      "ambiguity_noul": 0.58,
       "triage": "HUMAN_HOLD",
       "correct_for_seeded_labels": true
     }
@@ -403,5 +406,134 @@
         }
       }
     }
-  ]
+  ],
+  "evaluation_extension": "All 20 cases receive ambiguity screening, not selected using provisional expected labels; policy uses ONLY two Jev probabilities, without reference labels. The earlier stored raw G2/G3 risk answers were preserved. Known unresolved domain terms also need a separate vetted glossary preflight in real applications.",
+  "ambiguity_all_cases_requests": [
+    {
+      "batch_index": 1,
+      "case_ids": [
+        "G2-01",
+        "G2-02",
+        "G2-03",
+        "G2-04",
+        "G2-05",
+        "G2-06",
+        "G2-07"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614868-RzUsxLF4B4pUXNlqsJGU",
+      "diagnostic_id": "a1aa1a65-e1c6-40b5-9384-89e1a5ca92b4",
+      "usage": {
+        "input_tokens": 1279,
+        "output_tokens": 151,
+        "cost": 0.000053718
+      },
+      "answers": {
+        "amb_g2_01": {
+          "noul": 0.05
+        },
+        "amb_g2_02": {
+          "noul": 0.04
+        },
+        "amb_g2_03": {
+          "noul": 0.04
+        },
+        "amb_g2_04": {
+          "noul": 0.05
+        },
+        "amb_g2_05": {
+          "noul": 0.04
+        },
+        "amb_g2_06": {
+          "noul": 0.04
+        },
+        "amb_g2_07": {
+          "noul": 0.04
+        }
+      }
+    },
+    {
+      "batch_index": 2,
+      "case_ids": [
+        "G2-08",
+        "G2-09",
+        "G2-10",
+        "G3-11",
+        "G3-12",
+        "G3-13",
+        "G3-14"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614871-0Rk2kSwr1uGFQVkplIJR",
+      "diagnostic_id": "ad93218e-b4e0-415b-9a16-01579dd7234d",
+      "usage": {
+        "input_tokens": 1277,
+        "output_tokens": 151,
+        "cost": 0.000053634
+      },
+      "answers": {
+        "amb_g2_08": {
+          "noul": 0.07
+        },
+        "amb_g2_09": {
+          "noul": 0.76
+        },
+        "amb_g2_10": {
+          "noul": 0.79
+        },
+        "amb_g3_11": {
+          "noul": 0.04
+        },
+        "amb_g3_12": {
+          "noul": 0.05
+        },
+        "amb_g3_13": {
+          "noul": 0.04
+        },
+        "amb_g3_14": {
+          "noul": 0.05
+        }
+      }
+    },
+    {
+      "batch_index": 3,
+      "case_ids": [
+        "G3-15",
+        "G3-16",
+        "G3-17",
+        "G3-18",
+        "G3-19",
+        "G3-20"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614874-Ux41VBe6PSHTqPfVaSBl",
+      "diagnostic_id": "636e7ff6-1c2a-4ecb-9ec1-d2411f68e574",
+      "usage": {
+        "input_tokens": 1156,
+        "output_tokens": 130,
+        "cost": 0.000048552
+      },
+      "answers": {
+        "amb_g3_15": {
+          "noul": 0.05
+        },
+        "amb_g3_16": {
+          "noul": 0.04
+        },
+        "amb_g3_17": {
+          "noul": 0.04
+        },
+        "amb_g3_18": {
+          "noul": 0.05
+        },
+        "amb_g3_19": {
+          "noul": 0.04
+        },
+        "amb_g3_20": {
+          "noul": 0.58
+        }
+      }
+    }
+  ],
+  "bias_note": "Initial evaluation requested ambiguity judgments only for expected HOLD labels. Results above supersede that routing with new blind-to-label ambiguity judgment for ALL 20 cases. These synthetic labels are still provisional, NOT expert-certified."
 }
