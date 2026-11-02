@@ -141,6 +141,10 @@ export class TranslationWorkflow {
       return { id, status, reason, hv: row.draft.hv, plain: row.draft.plain, jevCalls: row.jevCalls, ...(retryAfterMs !== undefined ? { retryAfterMs } : {}) };
     };
     if (row.status === 'PILOT_CANDIDATE') return finish('AWAITING_G1_AND_HUMAN_REVIEW', 'PILOT_CANDIDATE');
+    // Retrying these without a repaired adapter or credential would ignore HUMAN review.
+    if (row.status === 'HUMAN_HOLD' && /^(G2|G3)_INVALID_JEV_RESPONSE$|^JEV_AUTH$/.test(row.reason ?? '')) {
+      return finish(row.reason ?? 'HUMAN_REVIEW_REQUIRED');
+    }
     // Source integrity cannot be repaired by repeatedly asking Jev.
     if (!row.draft.sourceZh || row.draft.sourceSha !== hashText(row.draft.sourceZh) || !row.draft.glossarySha) {
       return finish('SOURCE_INTEGRITY_BLOCK', 'BLOCKED');
@@ -182,7 +186,12 @@ export class TranslationWorkflow {
       const times = (row.invalidResponses.get(fingerprint) ?? 0) + 1;
       row.invalidResponses.set(fingerprint, times);
       // One explicit retry on resume; repeated invalid schema requires human action.
-      return finish(gate + '_INVALID_JEV_RESPONSE', times === 1 ? 'RETRYABLE_HOLD' : 'HUMAN_HOLD');
+      const status = times === 1 ? 'RETRYABLE_HOLD' : 'HUMAN_HOLD';
+      const last = row.evidence[row.evidence.length - 1];
+      if (last && last.gate === gate && last.fingerprint === fingerprint) {
+        row.evidence[row.evidence.length - 1] = { ...last, outcome: status };
+      }
+      return finish(gate + '_INVALID_JEV_RESPONSE', status);
     };
     const g2Key = key(['G2-v2.2-pilot', row.draft.sourceSha, row.draft.context, row.draft.hv, row.draft.glossarySha]);
     if (row.approvedG2Fingerprint !== g2Key) {
