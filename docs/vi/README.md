@@ -2,6 +2,8 @@
 
 > Trạng thái: **ĐỀ XUẤT / CHƯA TRIỂN KHAI**. Tài liệu này không khẳng định hệ thống hiện tại đã lập lá số chuẩn Việt Nam. Repo là fork của [Renhuai123/ziwei-doushu](https://github.com/Renhuai123/ziwei-doushu).
 
+**Workflow dịch thuật:** [Quy trình Việt hóa cho nhóm nhỏ](TRANSLATION_WORKFLOW.md) → [Checkpoint Jev-web bắt buộc](JEV_TRANSLATION_GATE.md). **Không sử dụng Weblate**. Chưa có lượt chấm trả phí Jev nào được thực hiện cho bản dịch của dự án; không phát hành khi gate còn HOLD.
+
 ## Mục tiêu
 
 Xây dựng ứng dụng Tử Vi Đẩu Số tiếng Việt trên mã nguồn hiện có, ưu tiên **tính đúng và kiểm chứng được** trước khi mở rộng giao diện hoặc luận giải AI.
@@ -13,8 +15,9 @@ Xây dựng ứng dụng Tử Vi Đẩu Số tiếng Việt trên mã nguồn hi
 3. **Không dùng kinh tuyến 120°E / UTC+8 cho giờ sinh tại Việt Nam.** Với giờ chuẩn Việt Nam hiện hành dùng UTC+7 (420 phút), kinh tuyến múi giờ 105°E; nhưng phải tách trường hợp lịch sử và nơi sinh ở nước ngoài.
 4. **Không tự ý áp dụng giờ mặt trời thật cho mọi người dùng.** Cho phép tùy chọn, hiển thị giờ gốc, thời gian hiệu chỉnh, quy tắc giờ Tý và thay đổi ngày.
 5. **Không thay đổi quy tắc an sao / trường phái mà chưa có đối chiếu lá số chuẩn.** Giữ cấu hình mặc định của upstream cho đến khi có quyết định có căn cứ.
-6. **Bảo toàn giấy phép và ghi công upstream.** Mã nguồn theo LICENSE; dữ liệu theo DATASET-LICENSE; trích dẫn bài giảng có giới hạn quyền riêng.
-7. **Tử vi là hệ thống diễn giải truyền thống**, không trình bày luận giải như dự đoán khoa học, chẩn đoán y tế hoặc tư vấn tài chính.
+6. **Bắt buộc kiểm định nội dung dịch trước phát hành.** Giữ nguyên văn Hán, bản sát nghĩa, bản giải thích phổ thông; tự kiểm tra thuật ngữ, Jev-web chấm 4 tiêu chí, cuối cùng con người phê duyệt. Không dùng Weblate. Lượt Jev phát sinh phí phải được người dùng cho phép trước.
+7. **Bảo toàn giấy phép và ghi công upstream.** Mã nguồn theo LICENSE; dữ liệu theo DATASET-LICENSE; trích dẫn bài giảng có giới hạn quyền riêng.
+8. **Tử vi là hệ thống diễn giải truyền thống**, không trình bày luận giải như dự đoán khoa học, chẩn đoán y tế hoặc tư vấn tài chính.
 
 ## Phạm vi kỹ thuật theo từng đợt
 
@@ -25,7 +28,7 @@ Xây dựng ứng dụng Tử Vi Đẩu Số tiếng Việt trên mã nguồn hi
 | V03 — Địa điểm & múi giờ | Dữ liệu tỉnh/thành Việt Nam, kinh độ; nguồn đồng hồ giờ sinh; xử lý UTC+7 và trường hợp lịch sử | Kiểm thử trường hợp giờ sát ranh giới, qua ngày |
 | V04 — Lịch Việt | Thêm adapter âm lịch Việt Nam; đối chiếu ngày/tháng nhuận và sai khác lịch Trung Quốc | Có golden cases và báo cáo sai khác |
 | V05 — Đối chiếu an sao | So với lá số tham chiếu theo trường phái Việt Nam được chọn | Bảng kiểm chứng 12 cung, chính tinh, tứ hóa, đại hạn |
-| V06 — Giải đoán | Dịch nội dung có kiểm soát và ghi nguồn; đánh giá AI riêng | Không đưa luận giải thiếu nguồn/không được cấp phép vào sản phẩm |
+| V06 — Giải đoán | Dịch hai lớp, khóa thuật ngữ, Jev-web checkpoint và người duyệt | Bản dịch có chứng cứ nguồn, Jev gate PASS, người duyệt APPROVE; không đưa nội dung thiếu nguồn/không được cấp phép vào sản phẩm |
 
 ## Các điểm mã nguồn cần kiểm tra trước khi sửa
 
@@ -41,4 +44,4 @@ Xây dựng ứng dụng Tử Vi Đẩu Số tiếng Việt trên mã nguồn hi
 
 **Không gộp thay đổi thuật toán chỉ vì giao diện đã hiển thị tiếng Việt.** PR có sửa kết quả lá số phải kèm ca kiểm thử, baseline trước/sau và giải thích quy tắc. Mọi khác biệt giữa các trường phái phải được ghi nhận, không tự tuyên bố trường phái nào đúng.
 
-Tài liệu kèm theo: [Thuật ngữ](TERMINOLOGY.md) · [Ma trận kiểm thử](TEST_MATRIX.md).
+Tài liệu kèm theo: [Thuật ngữ](TERMINOLOGY.md) · [Ma trận kiểm thử](TEST_MATRIX.md) · [Workflow dịch thuật](TRANSLATION_WORKFLOW.md) · [Checkpoint Jev](JEV_TRANSLATION_GATE.md).
