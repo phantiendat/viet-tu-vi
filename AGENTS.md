@@ -1,15 +1,16 @@
 # AGENTS.md — Việt Tử Vi
 
-## Mục tiêu
-Việt hóa ứng dụng Tử Vi Đẩu Số để thuật ngữ đúng ngữ cảnh và người Việt phổ thông hiểu được, không làm thay đổi engine an sao chỉ vì đổi ngôn ngữ.
+## Non-negotiable rules
 
-## Quy định bắt buộc cho mọi agent
-- Đọc `docs/vi/TRANSLATION_WORKFLOW.md`, `docs/vi/JEV_TRANSLATION_GATE.md`, `docs/vi/TERMINOLOGY.md` trước mọi công việc Việt hóa.
-- **Không dùng Weblate**; nhóm dịch nhỏ dùng GitHub Markdown/CSV và PR.
-- Không thay `lib/ziwei` raw data / can chi / hệ quy tắc bằng nhãn Việt; dịch chỉ ở presentation/formatting layer; giữ bảng so sánh nguyên bản.
-- Không nhập đè `HAHVAC/CEStu-vi-ai` lên engine hiện tại; chỉ tham khảo bản dịch đã đối chiếu.
-- Trước khi phát hành **mọi đợt dịch** phải chạy deterministic checks, checkpoint **Jev-web** và có kết luận người duyệt. Jev không tự quyết merge/release.
-- Kiểm tra `jev_status` và skill `typesafe-ai`; `jev_evaluate` là cuộc gọi trả phí, **không gọi khi người dùng chưa cho phép rõ ràng cho đợt đó**, không gửi PII, secrets. Nếu chưa thể gọi, ghi HOLD/NOT_RUN, tuyệt đối không tự báo PASS.
-- Không công bố nội dung có bản quyền chưa được cấp phép; bảo toàn credit, LICENSE và DATASET-LICENSE.
-- Chạy test và đối chiếu golden cases cho mọi sửa đổi lịch âm, giờ sinh, an sao. Kết quả AI không thay thế bằng chứng.
-- Báo cáo rõ DONE / PARTIAL / BLOCKED và tách bằng chứng thực tế với đề xuất.
+- **Translation-related work:** read the **one canonical specification** at [docs/vi/TRANSLATION_QUALITY_V22.md](docs/vi/TRANSLATION_QUALITY_V22.md) and the terminology catalogue [docs/vi/TERMINOLOGY.md](docs/vi/TERMINOLOGY.md). Earlier Jev gate/V2/V2.1 files are historical references, **not competing policies**.
+- **Release boundary:** V2.2 is a **published DESIGN, not implemented code**. Report SPEC_PUBLISHED truthfully. Never claim a translation passed G1/G2/G3 without actual version-matched Jev evidence, deterministic checks and human sign-off.
+- **Jev checkpoint:** confirm `jev_status`, load the official `typesafe-ai` skill, ask for explicit charge authorization and an approved batch cap. If authorization, quota, valid response or evidence is missing, record HUMAN_HOLD. Jev is the judge, not a translator or the publisher.
+- **Targeted loops:** revise only the failing segment and stage, with global budget/attempt limits and immutable version fingerprints. Fail closed; don't bypass gates for an attractive score.
+- **Meaning and provenance:** keep raw Chinese and chart-engine fields unchanged. For public interpretation, source-grounded claims must cite a source span; neutral glossary definitions use approved concept IDs; extra personal predictions are blocked.
+- **Sources:** preserve upstream MIT, dataset attribution, and teaching-quote restrictions; use no private personal birth data in Jev calls.
+- **Testing:** when code changes, preserve astrology engine invariants; run typecheck, test, build and independent negative translation tests. This documentation-only branch does not certify a working translator.
+- **Team:** GitHub files/PR and simple reviews only; **no Weblate**.
+
+## Completion criteria
+
+Every report distinguishes **design published**, **code implemented**, **Jev actually evaluated**, **human approved**, and **translation released**. Only verified steps are marked complete.
