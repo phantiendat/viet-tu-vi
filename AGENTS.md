@@ -11,6 +11,14 @@
 - **Testing:** when code changes, preserve astrology engine invariants; run typecheck, test, build and independent negative translation tests. This documentation-only branch does not certify a working translator.
 - **Team:** GitHub files/PR and simple reviews only; **no Weblate**.
 
+## Ownership, review and release
+
+- **Codex owns implementation:** coding, tests, local verification and commits on a review branch. GitHub is the source of truth for code; submit changes as a Draft PR for review.
+- **ChatGPT Web owns independent review:** challenge the diff, apply Ponytail, use Jev when relevant and authorized, and leave review comments on the PR. Jev calls still require the separately approved scope and budget described above.
+- **Project owner approval is required before merge, deployment or production changes.** A passing test or Draft PR is not that approval.
+- **Do not automatically import historical texts or other classical-source data.** Verify each source's license and permitted use before any import, and obtain project-owner approval.
+- **R02.2 setup only:** `tools/scholarly-evidence-gate/` is a proposal and exchange guide. It does not collect, import, parse or score source data and does not change the charting engine or application.
+
 ## Completion criteria
 
 Every report distinguishes **design published**, **code implemented**, **Jev actually evaluated**, **human approved**, and **translation released**. Only verified steps are marked complete.
