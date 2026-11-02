@@ -89,7 +89,7 @@ test('G3 missing score never counts as approval', async () => {
     writer: { rewritePlain: async () => { throw new Error('not invoked'); } },
   });
   const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 3 });
-  assert.equal(result.status, 'HUMAN_HOLD');
+  assert.equal(result.status, 'RETRYABLE_HOLD');
   assert.equal(result.reason, 'G3_INVALID_JEV_RESPONSE');
 });
 
@@ -137,9 +137,8 @@ test('malformed Jev response fails closed instead of throwing', async () => {
     writer: { rewritePlain: async () => { throw new Error('not invoked'); } },
   });
   const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 3 });
-  assert.equal(result.status, 'HUMAN_HOLD');
-  assert.equal(result.reason, 'G2_INVALID_JEV_RESPONSE');
   assert.equal(result.status, 'RETRYABLE_HOLD');
+  assert.equal(result.reason, 'G2_INVALID_JEV_RESPONSE');
 });
 
 
@@ -238,5 +237,85 @@ test('explicit Jev INVALID_RESPONSE errors are retryable once and then require h
   assert.equal((await wf.processSegment('sample-001', grant)).status, 'RETRYABLE_HOLD');
   assert.equal((await wf.resumeSegment('sample-001', grant)).status, 'HUMAN_HOLD');
   assert.equal((await wf.resumeSegment('sample-001', grant)).status, 'HUMAN_HOLD');
+  assert.equal(calls, 2);
+});
+
+test('unchanged rejected G2 verdict is not sent to Jev again on resume', async () => {
+  let calls = 0;
+  const workflow = new TranslationWorkflow([source], {
+    judge: { evaluate: async (req: GateRequest) => {
+      calls++;
+      assert.equal(req.gate, 'G2');
+      return { ...passG2(), scores: { ...passG2().scores, fidelity: score(0.25) } };
+    } },
+    writer: { rewritePlain: async () => { throw new Error('should never rewrite'); } }
+  });
+  const grant = { authorized: true, maxJevCalls: 20 };
+  assert.equal((await workflow.processSegment(source.id, grant)).reason, 'G2_NOT_APPROVED');
+  const repeated = await workflow.resumeSegment(source.id, grant);
+  assert.equal(repeated.status, 'HUMAN_HOLD');
+  assert.equal(repeated.jevCalls, 1);
+  assert.equal(calls, 1);
+});
+
+test('unchanged rejected G3 verdict is not sent to Jev again on resume', async () => {
+  const calls: string[] = [];
+  const workflow = new TranslationWorkflow([source], {
+    judge: { evaluate: async (req: GateRequest) => {
+      calls.push(req.gate);
+      return req.gate === 'G2' ? passG2() : {
+        ...g3(0.45),
+        scores: { readability: score(0.2), consistency: score(0.25) }
+      };
+    } },
+    writer: { rewritePlain: async () => { throw new Error('should not rewrite'); } }
+  });
+  const grant = { authorized: true, maxJevCalls: 20 };
+  assert.equal((await workflow.processSegment(source.id, grant)).reason, 'G3_NOT_APPROVED_OR_RETRY_LIMIT');
+  const repeated = await workflow.resumeSegment(source.id, grant);
+  assert.equal(repeated.status, 'HUMAN_HOLD');
+  assert.deepEqual(calls, ['G2', 'G3']);
+});
+
+test('two simultaneous resumes share one in-flight evaluation and one judge charge', async () => {
+  let release!: () => void;
+  let started!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  const begun = new Promise<void>(resolve => { started = resolve; });
+  const calls: string[] = [];
+  const workflow = new TranslationWorkflow([source], {
+    judge: { evaluate: async (req: GateRequest) => {
+      calls.push(req.gate);
+      if (req.gate === 'G2') {
+        started();
+        await pending;
+        return passG2();
+      }
+      return g3(0.01);
+    } },
+    writer: { rewritePlain: async () => { throw new Error('no rewrite'); } }
+  });
+  const grant = { authorized: true, maxJevCalls: 10 };
+  const first = workflow.processSegment(source.id, grant);
+  await begun; // first evaluation has started but not completed
+  const second = workflow.resumeSegment(source.id, grant);
+  assert.strictEqual(first, second);
+  release();
+  const [a, b] = await Promise.all([first, second]);
+  assert.equal(a.status, 'PILOT_CANDIDATE');
+  assert.deepEqual(a, b);
+  assert.deepEqual(calls, ['G2', 'G3']);
+  assert.equal(workflow.getEvidence(source.id).length, 2);
+});
+
+test('failed writer and unchanged draft do not charge again on resume', async () => {
+  let calls = 0;
+  const workflow = new TranslationWorkflow([source], {
+    judge: { evaluate: async (req: GateRequest) => { calls++; return req.gate === 'G2' ? passG2() : g3(0.99); } },
+    writer: { rewritePlain: async () => { throw new Error('writer failed'); } }
+  });
+  const grant = { authorized: true, maxJevCalls: 10 };
+  assert.equal((await workflow.processSegment(source.id, grant)).reason, 'PLAIN_REWRITE_FAILED');
+  assert.equal((await workflow.resumeSegment(source.id, grant)).reason, 'PLAIN_REWRITE_FAILED');
   assert.equal(calls, 2);
 });
