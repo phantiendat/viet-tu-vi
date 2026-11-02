@@ -29,13 +29,13 @@ test('R02 fixture has 20 synthetic cases with provisional, never expert-certifie
   assert.deepEqual(Object.fromEntries(['CLEAN','ISSUE','HOLD'].map(s => [s, fixture.cases.filter(c => c.expected === s).length])), { CLEAN: 8, ISSUE: 9, HOLD: 3 });
   assert.equal(new Set(fixture.cases.map(c => c.id)).size, 20);
 });
-test('R02 recorded evidence contains seven actual Jev requests; never claims live approval', () => {
+test('R02 recorded evidence contains nine actual Jev requests; never claims live approval', () => {
   assert.equal(run.label_quality, 'ASSISTANT_SEEDED_NOT_HUMAN_EXPERT_GOLD');
   assert.equal(run.predictions.length, 20);
-  assert.equal(run.raw_requests.length + run.ambiguity_all_cases_requests.length, 7);
+  assert.equal(run.raw_requests.length + run.ambiguity_all_cases_requests.length + run.g3_readability_evaluations.length, 9);
   assert.equal(run.threshold_policy.calibrated, false);
   assert.equal(run.threshold_policy.production_release_permitted, false);
-  const ids = [...run.raw_requests, ...run.ambiguity_all_cases_requests].map(r => r.request_id);
+  const ids = [...run.raw_requests, ...run.ambiguity_all_cases_requests, ...run.g3_readability_evaluations].map(r => r.request_id);
   assert.ok(ids.every(id => /^gen-dec-/.test(id)));
   assert.equal(new Set(ids).size, ids.length);
 });
@@ -62,4 +62,17 @@ test('R02 malformed risk/ambiguity is always held, never automatically passed', 
   assert.equal(triage(1.1, 0.01), 'HUMAN_HOLD');
   assert.equal(triage(0.01, 0.50), 'HUMAN_HOLD');
   assert.equal(triage(0.45, 0.02), 'REVIEW');
+});
+
+test('R02 10 G3 readability scores are advisory and cannot override semantic risk', () => {
+  assert.equal(run.g3_readability_scores.length, 10);
+  for (const score of run.g3_readability_scores) {
+    assert.ok(score.score_0_4 >= 0 && score.score_0_4 <= 4);
+    assert.equal(score.score_0_10, score.score_0_4 * 2.5);
+  }
+  const invented = run.g3_readability_scores.find(s => s.case_id === 'G3-19');
+  assert.ok(invented.score_0_10 > 8); // invented longevity claim reads naturally
+  assert.ok(invented.semantic_risk > 0.9); // but is still forbidden by source-grounding risk
+  const proposal = run.predictions.find(s => s.case_id === 'G3-19');
+  assert.equal(proposal.triage, 'FLAG'); // Score cannot cancel a material-risk flag
 });
