@@ -45,24 +45,39 @@ export type GateResponse = {
   readonly nouls: Readonly<Record<string, number>>;
 };
 export type JudgeAdapter = { evaluate(request: GateRequest): Promise<GateResponse> };
+/** Provider and schema errors are not the same as a poor translation score. */
+export type JudgeErrorCode = 'RATE_LIMIT' | 'TIMEOUT' | 'UNAVAILABLE' | 'AUTH' | 'INVALID_REQUEST' | 'INVALID_RESPONSE' | 'UNKNOWN';
+export class JudgeServiceError extends Error {
+  constructor(readonly code: JudgeErrorCode, message: string, readonly retryAfterMs?: number) {
+    super(message);
+    this.name = 'JudgeServiceError';
+  }
+}
 export type PlainWriter = {
   rewritePlain(request: Readonly<{ sourceZh: string; hv: string; plain: string; claims: readonly Claim[]; reason: 'UNSUPPORTED_ADDITION' }>): Promise<{ plain: string; claims: readonly Claim[] }>;
 };
-export type BudgetGrant = { readonly authorized: boolean; readonly maxJevCalls: number };
+/** Explicit batch consent and application budget; no fixed 6/min, 60/day or 7/segment provider cap. */
+export type BudgetGrant = {
+  readonly authorized: boolean;
+  readonly maxJevCalls: number;
+  readonly maxPlainRevisions?: number;
+};
 export type SegmentResult = Readonly<{
   id: string;
-  status: 'PILOT_CANDIDATE' | 'HUMAN_HOLD';
+  status: 'PILOT_CANDIDATE' | 'HUMAN_HOLD' | 'RETRYABLE_HOLD' | 'REWORK_REQUIRED' | 'BLOCKED';
   reason?: string;
   hv: string;
   plain: string;
   jevCalls: number;
+  retryAfterMs?: number;
 }>;
 export type Evidence = Readonly<{
   gate: Gate;
   fingerprint: string;
   model: string;
-  response: GateResponse;
-  outcome: 'CANDIDATE_PASS' | 'REWORK_PLAIN' | 'HUMAN_HOLD';
+  response?: GateResponse;
+  errorCode?: string;
+  outcome: 'CANDIDATE_PASS' | 'REWORK_PLAIN' | 'HUMAN_HOLD' | 'RETRYABLE_HOLD';
 }>;
 
 type MutableState = {
@@ -73,6 +88,7 @@ type MutableState = {
   plainRevisions: number;
   status: SegmentResult['status'];
   reason?: string;
+  invalidResponses: Map<string, number>;
 };
 
 function good(response: GateResponse, key: string): number | null {
@@ -107,7 +123,7 @@ export class TranslationWorkflow {
       if (this.rows.has(item.id)) throw new Error(`Duplicate segment: ${item.id}`);
       this.rows.set(item.id, {
         draft: structuredClone(item), evidence: [], jevCalls: 0, plainRevisions: 1,
-        status: 'HUMAN_HOLD', reason: 'NOT_STARTED',
+        status: 'HUMAN_HOLD', reason: 'NOT_STARTED', invalidResponses: new Map(),
       });
     }
   }
@@ -125,15 +141,23 @@ export class TranslationWorkflow {
       return { id, status, reason, hv: row.draft.hv, plain: row.draft.plain, jevCalls: row.jevCalls };
     };
     if (row.status === 'PILOT_CANDIDATE') return finish('AWAITING_G1_AND_HUMAN_REVIEW', 'PILOT_CANDIDATE');
-    if (!grant.authorized || grant.maxJevCalls <= 0) return finish('NO_AUTHORIZATION');
-    if (!Number.isInteger(grant.maxJevCalls)) return finish('INVALID_BUDGET');
-    if (!row.draft.sourceZh || row.draft.sourceSha !== hashText(row.draft.sourceZh) || !row.draft.glossarySha || !row.draft.hv || !row.draft.plain || !claimsValid(row.draft)) {
-      return finish('INVALID_SOURCE_OR_CLAIMS');
+    // Source integrity cannot be repaired by repeatedly asking Jev.
+    if (!row.draft.sourceZh || row.draft.sourceSha !== hashText(row.draft.sourceZh) || !row.draft.glossarySha) {
+      return finish('SOURCE_INTEGRITY_BLOCK', 'BLOCKED');
     }
-    const cap = Math.min(grant.maxJevCalls, 7);
-    const evaluate = async (gate: Gate, fingerprint: string): Promise<GateResponse | null> => {
-      if (row.jevCalls >= cap) return null;
-      // Count before the call: even a failed remote call can have incurred a charge.
+    // A bad generated explanation is repairable; never confuse it with tampered source.
+    if (!row.draft.hv?.trim() || !row.draft.plain?.trim() || !claimsValid(row.draft)) {
+      return finish('TRANSLATION_OR_CLAIMS_NEED_REWORK', 'REWORK_REQUIRED');
+    }
+    if (!grant.authorized) return finish('NO_AUTHORIZATION');
+    if (!Number.isSafeInteger(grant.maxJevCalls) || grant.maxJevCalls < 1) return finish('INVALID_OR_EXHAUSTED_BUDGET');
+    const plainCap = grant.maxPlainRevisions ?? 3;
+    if (!Number.isSafeInteger(plainCap) || plainCap < 1) return finish('INVALID_REVISION_BUDGET');
+    const cap = grant.maxJevCalls;
+    type JudgeAttempt = { ok: true; response: GateResponse } | { ok: false; reason: string; status: SegmentResult['status'] };
+    const evaluate = async (gate: Gate, fingerprint: string): Promise<JudgeAttempt> => {
+      if (row.jevCalls >= cap) return { ok: false, reason: 'BATCH_BUDGET_EXHAUSTED', status: 'HUMAN_HOLD' };
+      // Count before call; even a failed request may incur provider cost.
       row.jevCalls++;
       const d = row.draft;
       const request: GateRequest = {
@@ -141,13 +165,30 @@ export class TranslationWorkflow {
         glossarySha: d.glossarySha, hv: d.hv,
         ...(gate === 'G3' ? { plain: d.plain, claims: structuredClone(d.claims) } : {}),
       };
-      try { return await this.deps.judge.evaluate(request); }
-      catch { return null; }
+      try { return { ok: true, response: await this.deps.judge.evaluate(request) }; }
+      catch (error) {
+        const code = error instanceof JudgeServiceError ? error.code : 'UNKNOWN';
+        // Provider rate-limit status may occur even though Jev-web's 6/min and 60/day
+        // limiter is disabled. No automatic retry: caller explicitly resumes.
+        const status: SegmentResult['status'] =
+          code === 'RATE_LIMIT' || code === 'TIMEOUT' || code === 'UNAVAILABLE'
+            ? 'RETRYABLE_HOLD' : code === 'INVALID_REQUEST'
+            ? 'REWORK_REQUIRED' : 'HUMAN_HOLD';
+        row.evidence.push({ gate, fingerprint, model: 'unknown', errorCode: code, outcome: status === 'RETRYABLE_HOLD' ? 'RETRYABLE_HOLD' : 'HUMAN_HOLD' });
+        return { ok: false, reason: 'JEV_' + code, status };
+      }
+    };
+    const malformed = (gate: Gate, fingerprint: string): SegmentResult => {
+      const times = (row.invalidResponses.get(fingerprint) ?? 0) + 1;
+      row.invalidResponses.set(fingerprint, times);
+      // One explicit retry on resume; repeated invalid schema requires human action.
+      return finish(gate + '_INVALID_JEV_RESPONSE', times === 1 ? 'RETRYABLE_HOLD' : 'HUMAN_HOLD');
     };
     const g2Key = key(['G2-v2.2-pilot', row.draft.sourceSha, row.draft.context, row.draft.hv, row.draft.glossarySha]);
     if (row.approvedG2Fingerprint !== g2Key) {
-      const verdict = await evaluate('G2', g2Key);
-      if (!verdict) return finish('G2_JEV_UNAVAILABLE_OR_BUDGET');
+      const attempt = await evaluate('G2', g2Key);
+      if (!attempt.ok) return finish(attempt.reason, attempt.status);
+      const verdict = attempt.response;
       const fidelity = good(verdict, 'fidelity');
       const conditions = good(verdict, 'conditions_preserved');
       const omission = risk(verdict, 'omission_risk');
@@ -155,24 +196,25 @@ export class TranslationWorkflow {
       const isValid = fidelity !== null && conditions !== null && omission !== null && contradiction !== null;
       const pass = isValid && fidelity >= 0.9 && conditions >= 0.9 && omission <= 0.1 && contradiction <= 0.1;
       row.evidence.push({ gate: 'G2', fingerprint: g2Key, model: verdict.model, response: structuredClone(verdict), outcome: pass ? 'CANDIDATE_PASS' : 'HUMAN_HOLD' });
-      if (!pass) return finish(isValid ? 'G2_NOT_APPROVED' : 'G2_INVALID_JEV_RESPONSE');
+      if (!pass) return isValid ? finish('G2_NOT_APPROVED') : malformed('G2', g2Key);
       row.approvedG2Fingerprint = g2Key;
     }
     // G2 is unchanged if only the explanatory wording changes.
     while (true) {
       const d = row.draft;
       const g3Key = key(['G3-v2.2-pilot', d.sourceSha, d.context, d.hv, d.glossarySha, d.plain, d.claims]);
-      const verdict = await evaluate('G3', g3Key);
-      if (!verdict) return finish('G3_JEV_UNAVAILABLE_OR_BUDGET');
+      const attempt = await evaluate('G3', g3Key);
+      if (!attempt.ok) return finish(attempt.reason, attempt.status);
+      const verdict = attempt.response;
       const readability = good(verdict, 'readability');
       const consistency = good(verdict, 'consistency');
       const invented = risk(verdict, 'unsupported_additions');
       const isValid = readability !== null && consistency !== null && invented !== null;
       const pass = isValid && readability >= 0.85 && consistency >= 0.9 && invented <= 0.1;
-      const canReworkPlain = isValid && invented >= 0.7 && row.plainRevisions < 3;
+      const canReworkPlain = isValid && invented >= 0.7 && row.plainRevisions < plainCap;
       row.evidence.push({ gate: 'G3', fingerprint: g3Key, model: verdict.model, response: structuredClone(verdict), outcome: pass ? 'CANDIDATE_PASS' : canReworkPlain ? 'REWORK_PLAIN' : 'HUMAN_HOLD' });
       if (pass) return finish('AWAITING_G1_AND_HUMAN_REVIEW', 'PILOT_CANDIDATE');
-      if (!canReworkPlain) return finish(isValid ? 'G3_NOT_APPROVED_OR_RETRY_LIMIT' : 'G3_INVALID_JEV_RESPONSE');
+      if (!canReworkPlain) return isValid ? finish('G3_NOT_APPROVED_OR_RETRY_LIMIT') : malformed('G3', g3Key);
       let updated: { plain: string; claims: readonly Claim[] };
       try {
         updated = await this.deps.writer.rewritePlain({ sourceZh: d.sourceZh, hv: d.hv, plain: d.plain, claims: structuredClone(d.claims), reason: 'UNSUPPORTED_ADDITION' });
@@ -181,7 +223,7 @@ export class TranslationWorkflow {
       if (updated.plain === d.plain && JSON.stringify(updated.claims) === JSON.stringify(d.claims)) return finish('REWRITE_UNCHANGED');
       row.draft = { ...d, plain: updated.plain, claims: structuredClone(updated.claims) };
       row.plainRevisions++;
-      if (!claimsValid(row.draft)) return finish('INVALID_SOURCE_OR_CLAIMS');
+      if (!claimsValid(row.draft)) return finish('TRANSLATION_OR_CLAIMS_NEED_REWORK', 'REWORK_REQUIRED');
     }
   }
 
