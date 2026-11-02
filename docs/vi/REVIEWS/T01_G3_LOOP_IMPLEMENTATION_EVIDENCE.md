@@ -8,15 +8,15 @@
 - Injected `JudgeAdapter` supplies typed 5-level Score distributions and Noul probabilities for G2 and G3; **no real Jev-web network/API adapter is shipped or invoked**.
 - Pilot-only deterministic thresholds assess G2 fidelity/negation/omissions/contradictions; G3 readability/consistency/unsupported-addition risk.
 - G3 detects a simulated invented prediction, calls `PlainWriter.rewritePlain` once, reevaluates G3 on the changed `plain_vi`, and **does not call G2 again**.
-- Immutable source SHA validation; claim source-span existence checks, score-response shape checks, no-call-without-authorization guard; maximum 7 judge calls/segment, maximum 3 plain revisions; fail closed into `HUMAN_HOLD`.
+- Immutable source SHA validation; claim source-span existence checks, score-response shape checks, no-call-without-authorization guard; an application-authorized judge-call grant (no historical 7-call provider cap), default maximum 3 plain revisions, and fail-closed result statuses.
 - A red test reproduced a crash on malformed Jev answers (missing `scores` / `nouls`); the implementation now treats missing fields as invalid evidence and returns `HUMAN_HOLD` (9/9 passing locally).
-- Budget exhaustion and tampered source hash both return `HUMAN_HOLD`; no judge request is issued for a hash mismatch.
+- Budget exhaustion returns `HUMAN_HOLD`; tampered source hashes return `BLOCKED`; no judge request is issued for a hash mismatch.
 - No code path emits `PUBLISHED`; successfully passing the tracer only means `PILOT_CANDIDATE` awaiting G1 + human evidence.
 
 ## Verification
 
 - **Red:** Running the G3 test first failed with `ERR_MODULE_NOT_FOUND` (new workflow module missing).
-- **Green:** Nine behavior tests passed locally with Node 22 TypeScript strip-only mode and fake deterministic judge.
+- **Green:** The previous commit's nine cases were reported as passing locally. The current expanded suite requires a fresh verified run; no PASS claim is made for the current commit.
 - **Typecheck:** Isolated `tsc --noEmit --strict --target es2022 --module esnext --moduleResolution bundler` on workflow + tests passed with local Node types.
 - `package.json` adds regression test to existing `npm test`; check actual GitHub Actions workflow results for full repository typecheck + suite.
 - This isolated checkout is a reconstruction from repo files; full `npm ci` / `npm test` / `npm run build` are **not claimed** until CI verifies.
@@ -53,3 +53,18 @@ Use Matt Pocock `codebase-design`, `tdd`, `code-review` (Standards + Spec) crite
 - Expanded the test suite from 9 to **15 test cases** (including >7 permitted mock calls, 429, INVALID_RESPONSE, source tampering, repairable claims and AUTH). These 6 additional cases **have not been executed in this session**: there are zero GitHub Actions workflow runs accessible for this repo at time of inspection, and the container has no network access for cloning. Do not claim 15/15 PASS without a real test log.
 
 **Next verification before merge:** run `npm ci && npm run typecheck && npm test && npm run build` on a machine with the repository, record command outputs/commit SHA, and challenge the error gate with a fake adapter. Real paid Jev calls are not needed for these tests.
+
+## R01 — P0 fixes and recovery contract (2026-11-02)
+
+**Code amended without merging:**
+- Fixed two inconsistent tests: the first malformed model payload yields `RETRYABLE_HOLD`, and a repeated malformed result yields `HUMAN_HOLD`. Removed a test that asserted both statuses for one returned object.
+- Added per-segment **single-flight** for `processSegment()/resumeSegment()` within one `TranslationWorkflow` instance; concurrent requests join one in-flight Promise, so the fake judge cannot be double-called for the same segment within that instance.
+- On unchanged input, `G2_NOT_APPROVED`, `G3_NOT_APPROVED_OR_RETRY_LIMIT`, `REWRITE_UNCHANGED` and failed writer attempts stay `HUMAN_HOLD`; no new Jev judgment is sent without a corrected revision. `RETRYABLE_HOLD` still permits an explicitly authorized resume for transient provider errors or one invalid schema retry.
+- **Recovery contract (pilot):** `REWORK_REQUIRED` and semantic rejection require an operator to correct the segment and create a **new `TranslationWorkflow` instance** using a new immutable source/HV/plain/claims snapshot. The pilot deliberately has no public mutable edit API. For T02, provide a durable `submitRevision` transition that invalidates only dependent gates and requires a new batch authorization.
+- Added 4 targeted mock tests for unchanged G2/G3 failures, simultaneous resumes, and writer failures. Total regression source now contains **19 declared tests**.
+
+**Evidence boundary:** these changes were verified by GitHub file readback and static source review; **Node/npm regression and TypeScript typecheck on the amended branch have not been verified**. GitHub Actions was previously showing no runs; do not mark this code green or merge purely on the prior nine-test statement.
+
+**Concurrency limitation:** single-flight is **per process/instance only**. Real paid Jev calls require a persistent idempotency key, transaction/lock or other shared deduplication before multi-worker deployment; this is still part of T02, not complete in R01.
+
+**Reviewer gate:** Ponytail review and a fresh Jev architecture/code-risk score must reference the final PR commit. This PR remains Draft until approval.
