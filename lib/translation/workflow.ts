@@ -76,14 +76,14 @@ type MutableState = {
 };
 
 function good(response: GateResponse, key: string): number | null {
-  const p = response.scores[key]?.probabilities;
+  const p = response?.scores?.[key]?.probabilities;
   if (!Array.isArray(p) || p.length !== 5 || p.some(v => !Number.isFinite(v) || v < 0 || v > 1)) return null;
   if (Math.abs(p.reduce((a, b) => a + b, 0) - 1) > 0.06) return null;
   return p[3] + p[4];
 }
 function risk(response: GateResponse, key: string): number | null {
-  const p = response.nouls[key];
-  return Number.isFinite(p) && p >= 0 && p <= 1 ? p : null;
+  const p = response?.nouls?.[key];
+  return typeof p === 'number' && Number.isFinite(p) && p >= 0 && p <= 1 ? p : null;
 }
 function claimsValid(draft: SourceSegment): boolean {
   return draft.claims.length > 0 && draft.claims.every(c => {
