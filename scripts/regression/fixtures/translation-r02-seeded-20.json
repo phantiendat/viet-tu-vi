@@ -1,0 +1,207 @@
+{
+  "dataset_id": "viet-tu-vi-r02-seeded-20-v1",
+  "schema_version": 1,
+  "source_type": "constructed_synthetic_minimal_pairs",
+  "glossary": "docs/vi/TERMINOLOGY.md@V00",
+  "label_status": "AUTHOR_SEEDED_PROVISIONAL_NOT_EXPERT_GOLD",
+  "human_expert_approved": false,
+  "model_use": "R02 G2/G3 live Jev question pilot only; no translation/publish benchmark",
+  "hold_policy": "HOLD cases are manually routed and are not binary pass/fail labels.",
+  "limitations": [
+    "Synthetic short sentences are not representative of historical prose; never report calibration or production accuracy from this set.",
+    "Labels derived from intentional minimal edits by assistant; not certified by bilingual domain reviewer.",
+    "JeV may not be able to identify correct sense of disputed classical characters."
+  ],
+  "cases": [
+    {
+      "id": "G2-01",
+      "gate": "G2",
+      "source_zh": "命宫有紫微。",
+      "hv_vi": "Cung Mệnh có sao Tử Vi.",
+      "expected": "CLEAN",
+      "fault": "none",
+      "explanation": "Preserves palace, star and presence."
+    },
+    {
+      "id": "G2-02",
+      "gate": "G2",
+      "source_zh": "命宫无紫微。",
+      "hv_vi": "Cung Mệnh không có sao Tử Vi.",
+      "expected": "CLEAN",
+      "fault": "none",
+      "explanation": "Preserves absence."
+    },
+    {
+      "id": "G2-03",
+      "gate": "G2",
+      "source_zh": "官禄宫有天府。",
+      "hv_vi": "Cung Quan Lộc có sao Thiên Phủ.",
+      "expected": "CLEAN",
+      "fault": "none",
+      "explanation": "Preserves star/palace relation."
+    },
+    {
+      "id": "G2-04",
+      "gate": "G2",
+      "source_zh": "财帛宫有武曲，田宅宫无太阴。",
+      "hv_vi": "Cung Tài Bạch có sao Vũ Khúc, cung Điền Trạch không có sao Thái Âm.",
+      "expected": "CLEAN",
+      "fault": "none",
+      "explanation": "Preserves both clauses."
+    },
+    {
+      "id": "G2-05",
+      "gate": "G2",
+      "source_zh": "命宫无紫微。",
+      "hv_vi": "Cung Mệnh có sao Tử Vi.",
+      "expected": "ISSUE",
+      "fault": "negation_inverted",
+      "explanation": "无 (not present) rendered as present."
+    },
+    {
+      "id": "G2-06",
+      "gate": "G2",
+      "source_zh": "官禄宫有天府。",
+      "hv_vi": "Cung Quan Lộc có sao Thiên Tướng.",
+      "expected": "ISSUE",
+      "fault": "star_swapped",
+      "explanation": "天府 is Thiên Phủ, not Thiên Tướng."
+    },
+    {
+      "id": "G2-07",
+      "gate": "G2",
+      "source_zh": "财帛宫有武曲，田宅宫无太阴。",
+      "hv_vi": "Cung Tài Bạch có sao Vũ Khúc, cung Điền Trạch có sao Thái Âm.",
+      "expected": "ISSUE",
+      "fault": "negation_inverted",
+      "explanation": "无太阴 inverted to có sao Thái Âm."
+    },
+    {
+      "id": "G2-08",
+      "gate": "G2",
+      "source_zh": "命宫有紫微，迁移宫有天马。",
+      "hv_vi": "Cung Mệnh có sao Tử Vi.",
+      "expected": "ISSUE",
+      "fault": "clause_omitted",
+      "explanation": "Omitted 迁移宫有天马."
+    },
+    {
+      "id": "G2-09",
+      "gate": "G2",
+      "source_zh": "有相为有用，无相为孤君。",
+      "hv_vi": "Có Tướng thì hữu dụng, không có Tướng thì như vị vua cô độc.",
+      "expected": "HOLD",
+      "fault": "ambiguous_classical_term",
+      "explanation": "相 may mean auxiliary/support, not necessarily a specific star; canonical meaning requires human source review."
+    },
+    {
+      "id": "G2-10",
+      "gate": "G2",
+      "source_zh": "逢凶福自申。",
+      "hv_vi": "Gặp điều hung thì phúc tự hiển lộ.",
+      "expected": "HOLD",
+      "fault": "disputed_historical_reading",
+      "explanation": "申 interpretation is not settled from this fragment; require contextual attestation."
+    },
+    {
+      "id": "G3-11",
+      "gate": "G3",
+      "source_zh": "命宫有紫微。",
+      "hv_vi": "Cung Mệnh có sao Tử Vi.",
+      "plain_vi": "Sao Tử Vi ở cung Mệnh.",
+      "expected": "CLEAN",
+      "fault": "none",
+      "explanation": "Paraphrases exactly the HV statement."
+    },
+    {
+      "id": "G3-12",
+      "gate": "G3",
+      "source_zh": "夫妻宫无天同。",
+      "hv_vi": "Cung Phu Thê không có sao Thiên Đồng.",
+      "plain_vi": "Cung Phu Thê không có sao Thiên Đồng.",
+      "expected": "CLEAN",
+      "fault": "none",
+      "explanation": "Preserves the negative claim."
+    },
+    {
+      "id": "G3-13",
+      "gate": "G3",
+      "source_zh": "官禄宫有天府。",
+      "hv_vi": "Cung Quan Lộc có sao Thiên Phủ.",
+      "plain_vi": "Sao Thiên Phủ nằm ở cung Quan Lộc.",
+      "expected": "CLEAN",
+      "fault": "none",
+      "explanation": "Plain restatement with same named star and palace."
+    },
+    {
+      "id": "G3-14",
+      "gate": "G3",
+      "source_zh": "财帛宫有武曲。",
+      "hv_vi": "Cung Tài Bạch có sao Vũ Khúc.",
+      "plain_vi": "Cung Tài Bạch xuất hiện sao Vũ Khúc.",
+      "expected": "CLEAN",
+      "fault": "none",
+      "explanation": "Plain restatement with no predictions."
+    },
+    {
+      "id": "G3-15",
+      "gate": "G3",
+      "source_zh": "命宫有紫微。",
+      "hv_vi": "Cung Mệnh có sao Tử Vi.",
+      "plain_vi": "Sao Tử Vi ở cung Mệnh; năm sau chắc chắn đại phú.",
+      "expected": "ISSUE",
+      "fault": "unsupported_prediction",
+      "explanation": "Adds certain wealth prediction not in source or HV."
+    },
+    {
+      "id": "G3-16",
+      "gate": "G3",
+      "source_zh": "夫妻宫无天同。",
+      "hv_vi": "Cung Phu Thê không có sao Thiên Đồng.",
+      "plain_vi": "Cung Phu Thê có sao Thiên Đồng.",
+      "expected": "ISSUE",
+      "fault": "negation_inverted",
+      "explanation": "Drops the negation."
+    },
+    {
+      "id": "G3-17",
+      "gate": "G3",
+      "source_zh": "官禄宫有天府。",
+      "hv_vi": "Cung Quan Lộc có sao Thiên Phủ.",
+      "plain_vi": "Sao Thiên Tướng nằm tại cung Quan Lộc.",
+      "expected": "ISSUE",
+      "fault": "star_swapped",
+      "explanation": "Changes Thiên Phủ to Thiên Tướng."
+    },
+    {
+      "id": "G3-18",
+      "gate": "G3",
+      "source_zh": "财帛宫有武曲，田宅宫无太阴。",
+      "hv_vi": "Cung Tài Bạch có sao Vũ Khúc; cung Điền Trạch không có sao Thái Âm.",
+      "plain_vi": "Cung Tài Bạch có sao Vũ Khúc.",
+      "expected": "ISSUE",
+      "fault": "clause_omitted",
+      "explanation": "Leaves out statement about Điền Trạch."
+    },
+    {
+      "id": "G3-19",
+      "gate": "G3",
+      "source_zh": "命宫有紫微。",
+      "hv_vi": "Cung Mệnh có sao Tử Vi.",
+      "plain_vi": "Sao Tử Vi ở cung Mệnh nên chắc chắn sống trên 100 tuổi.",
+      "expected": "ISSUE",
+      "fault": "unsupported_prediction",
+      "explanation": "Adds a definite longevity forecast absent from source or HV."
+    },
+    {
+      "id": "G3-20",
+      "gate": "G3",
+      "source_zh": "紫微原属土，有相为有用。",
+      "hv_vi": "Tử Vi vốn thuộc hành Thổ, có Tướng thì hữu dụng.",
+      "plain_vi": "Sao Tử Vi thuộc Thổ; khi có Tướng thì có tác dụng.",
+      "expected": "HOLD",
+      "fault": "ambiguous_classical_term",
+      "explanation": "相 should not be assigned a specific historical meaning from text alone."
+    }
+  ]
+}
