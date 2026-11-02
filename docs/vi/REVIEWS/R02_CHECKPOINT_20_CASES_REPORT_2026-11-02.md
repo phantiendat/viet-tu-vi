@@ -10,8 +10,8 @@
 
 - 20 synthetic, short **constructed** Chinese/Vietnamese test pairs: 10 G2 HV and 10 G3 plain-explanation checks.
 - 8 intentionally clean translations, 9 intentionally altered translations, 3 ambiguous classical fragments. **These are assistant-seeded provisional references, not bilingual specialist-verified gold labels.**
-- Live Jev model: `typesafe/jev-1.14-20261014`, **7 successful paid evaluation requests**. Aggregate reported API cost `USD 0.000409626`; these are provider usage estimates, not the user's invoice.
-- Every case received separate **material mismatch risk Noul** and **source ambiguity Noul**. The second screening pass was sent for *all 20 cases* to remove test-label-dependent routing; initial ambiguity questions had only been sent for seeded HOLD cases and are preserved in the raw log for transparency.
+- Live Jev model: `typesafe/jev-1.14-20261014`, **9 successful paid evaluation requests**. Aggregate reported API cost `USD 0.000512400`; these are provider usage estimates, not the user's invoice.
+- Every case received separate **material mismatch risk Noul** and **source ambiguity Noul**. The 10 G3 cases were additionally scored with an independent **readability Score** (advisory only). The second screening pass was sent for *all 20 cases* to remove test-label-dependent routing; initial ambiguity questions had only been sent for seeded HOLD cases and are preserved in the raw log for transparency.
 - Frozen, **uncalibrated smoke-test** policy: `ambiguity_noul >= 0.30` -> `HUMAN_HOLD`; else `risk_noul >= 0.70` -> `FLAG`; else `risk_noul <= 0.30` -> `CLEAR`; otherwise `REVIEW`. These thresholds are not certified production thresholds.
 - Final provisional-label agreement on this one seeded dataset: **9/9 injected issues flagged, 8/8 constructed clean examples clear, 3/3 ambiguity examples held.** A zero count of observed false negatives on 9 invented, straightforward errors does **not** establish field false-negative rate or release safety.
 - Strong G2/G3 examples are straightforward term/negation tests. Severe difficulties (idiom, context, historical nuance, contested sources) remain outside this sample's representativeness.
@@ -49,9 +49,9 @@
 
 **P1 — Expert reference labels not yet provided.** Every expected label was constructed by the assistant using short Chinese phrases and controlled Vietnamese mutations. Require a bilingual Tử Vi/domain specialist to review every case, then create independent historical text cases. Do not call this a validated gold dataset or claim 100% translation quality.
 
-**P1 — Reproducibility and deployment barriers.** The supplied typed Jev questions are atomic and receive public synthetic inputs. Batch requests contain only 1–8 questions and a short public state. All output distributions/answers are held in the JSON evidence. Site currently reports ready and no fixed rate limiter. Production requires real adapter, server-side secrets, per-batch cost ledger, cross-worker duplicate suppression and full-repo typecheck/test/build. No publish action exists in T01.
+**P1 — Reproducibility and deployment barriers.** The supplied typed Jev questions are atomic and receive public synthetic inputs. Batch requests contain only 1–8 questions and a short public state. Readability was judged in separate two additional requests. All output distributions/answers are held in the JSON evidence. Site currently reports ready and no fixed rate limiter. Production requires real adapter, server-side secrets, per-batch cost ledger, cross-worker duplicate suppression and full-repo typecheck/test/build. No publish action exists in T01.
 
-**P1 — Test runner is snapshot integrity only.** `scripts/regression/translation-r02-evidence.test.mjs` runs **deterministic assertions against SAVED Jev responses**; it neither runs the API nor validates their accuracy. Included via `npm test`, with dedicated command `npm run test:r02`. 13 cross-file consistency checks have been run using the GitHub connector + JS deterministic validator; **the committed Node test script has not been executed in CI** and no whole-app build is verified.
+**P1 — Test runner is snapshot integrity only.** `scripts/regression/translation-r02-evidence.test.mjs` runs **deterministic assertions against SAVED Jev responses**; it neither runs the API nor validates their accuracy. Included via `npm test`, with dedicated command `npm run test:r02`. 13 cross-file consistency checks were run using the GitHub connector + JS deterministic validator before the final readability extension; **the committed Node test script has not been executed in CI** and no whole-app build is verified.
 
 **P1 — Verify no missing source meaning.** G3 comparison against HV is useful only after independent G2 source/HV checking. G3 cannot compensate for an incorrect original HV that was accidentally approved.
 
@@ -66,3 +66,16 @@ The intended architecture remains **GPT-6 as sole translator**, **Jev as targete
 - Live request IDs and numeric responses are in the raw JSON; no source key or private chart data was sent.
 - Raw and policy input do not include the provisional labels for the final all-case ambiguity pass.
 - No merge, no deploy, no code path to production publishing in this work.
+
+## G3 readability diagnostic — supplementary live Jev tests
+
+Additional 2 paid calls assessed Vietnamese clarity on 10 G3 candidates independently of semantic correctness. A Score is **advisory**, not a release threshold. The saved evidence includes per-case Score distributions and request IDs.
+
+- `G3-15` invented next-year wealth forecast: readability **8.58/10**, while unsupported-addition risk Noul **0.99**.
+- `G3-19` invented longevity forecast: readability **8.73/10**, while unsupported-addition risk Noul **1.00**.
+- `G3-18` missing a source clause: readability **8.80/10**, material mismatch risk **0.99**.
+- `G3-20` historical ambiguity: readability **6.05/10**, ambiguity Noul **0.58**, therefore `HUMAN_HOLD`.
+
+This demonstrates **fluency and grounding are separate properties**. Any material source mismatch must veto candidate PASS regardless of readability Score. No deliberately garbled Vietnamese stress cases were included, so low-readability recall was **not evaluated**.
+
+The aggregate cost of all **9** live Jev requests is reported as **USD 0.000512400**. These requests remain synthetic and are not evidence of production accuracy.
