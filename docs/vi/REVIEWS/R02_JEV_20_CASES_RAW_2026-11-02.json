@@ -28,8 +28,8 @@
     "clean_flagged": 0,
     "clean_held": 0,
     "holds_manual": 3,
-    "cost_usd": 0.000409626,
-    "request_count": 7
+    "cost_usd": 0.0005124,
+    "request_count": 9
   },
   "predictions": [
     {
@@ -535,5 +535,216 @@
       }
     }
   ],
-  "bias_note": "Initial evaluation requested ambiguity judgments only for expected HOLD labels. Results above supersede that routing with new blind-to-label ambiguity judgment for ALL 20 cases. These synthetic labels are still provisional, NOT expert-certified."
+  "bias_note": "Initial evaluation requested ambiguity judgments only for expected HOLD labels. Results above supersede that routing with new blind-to-label ambiguity judgment for ALL 20 cases. These synthetic labels are still provisional, NOT expert-certified.",
+  "g3_readability_evaluations": [
+    {
+      "case_ids": [
+        "G3-11",
+        "G3-12",
+        "G3-13",
+        "G3-14",
+        "G3-15"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793615208-uY1UrZh2CKdZTAtu22Qr",
+      "usage": {
+        "input_tokens": 1218,
+        "output_tokens": 94,
+        "cost": 0.000051156
+      },
+      "answers": {
+        "read_g3_11": {
+          "score": 3.43,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.1,
+            "3": 0.32,
+            "4": 0.57
+          }
+        },
+        "read_g3_12": {
+          "score": 3.46,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.08,
+            "3": 0.36,
+            "4": 0.55
+          }
+        },
+        "read_g3_13": {
+          "score": 3.45,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.09,
+            "3": 0.34,
+            "4": 0.56
+          }
+        },
+        "read_g3_14": {
+          "score": 3.24,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.15,
+            "3": 0.43,
+            "4": 0.41
+          }
+        },
+        "read_g3_15": {
+          "score": 3.43,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.08,
+            "3": 0.38,
+            "4": 0.53
+          }
+        }
+      }
+    },
+    {
+      "case_ids": [
+        "G3-16",
+        "G3-17",
+        "G3-18",
+        "G3-19",
+        "G3-20"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793615294-XRBfN8Z11rHOQ2xsCI0S",
+      "usage": {
+        "input_tokens": 1229,
+        "output_tokens": 94,
+        "cost": 0.000051618
+      },
+      "answers": {
+        "read_g3_16": {
+          "score": 3.45,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.09,
+            "3": 0.35,
+            "4": 0.55
+          }
+        },
+        "read_g3_17": {
+          "score": 3.49,
+          "probabilities": {
+            "0": 0,
+            "1": 0,
+            "2": 0.08,
+            "3": 0.33,
+            "4": 0.59
+          }
+        },
+        "read_g3_18": {
+          "score": 3.52,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.07,
+            "3": 0.32,
+            "4": 0.6
+          }
+        },
+        "read_g3_19": {
+          "score": 3.49,
+          "probabilities": {
+            "0": 0,
+            "1": 0,
+            "2": 0.07,
+            "3": 0.35,
+            "4": 0.58
+          }
+        },
+        "read_g3_20": {
+          "score": 2.42,
+          "probabilities": {
+            "0": 0,
+            "1": 0.07,
+            "2": 0.51,
+            "3": 0.34,
+            "4": 0.08
+          }
+        }
+      }
+    }
+  ],
+  "g3_readability_scores": [
+    {
+      "case_id": "G3-11",
+      "expected": "CLEAN",
+      "score_0_4": 3.43,
+      "score_0_10": 8.575000000000001,
+      "semantic_risk": 0.04
+    },
+    {
+      "case_id": "G3-12",
+      "expected": "CLEAN",
+      "score_0_4": 3.46,
+      "score_0_10": 8.65,
+      "semantic_risk": 0.02
+    },
+    {
+      "case_id": "G3-13",
+      "expected": "CLEAN",
+      "score_0_4": 3.45,
+      "score_0_10": 8.625,
+      "semantic_risk": 0.03
+    },
+    {
+      "case_id": "G3-14",
+      "expected": "CLEAN",
+      "score_0_4": 3.24,
+      "score_0_10": 8.100000000000001,
+      "semantic_risk": 0.04
+    },
+    {
+      "case_id": "G3-15",
+      "expected": "ISSUE",
+      "score_0_4": 3.43,
+      "score_0_10": 8.575000000000001,
+      "semantic_risk": 0.99
+    },
+    {
+      "case_id": "G3-16",
+      "expected": "ISSUE",
+      "score_0_4": 3.45,
+      "score_0_10": 8.625,
+      "semantic_risk": 1
+    },
+    {
+      "case_id": "G3-17",
+      "expected": "ISSUE",
+      "score_0_4": 3.49,
+      "score_0_10": 8.725000000000001,
+      "semantic_risk": 1
+    },
+    {
+      "case_id": "G3-18",
+      "expected": "ISSUE",
+      "score_0_4": 3.52,
+      "score_0_10": 8.8,
+      "semantic_risk": 0.99
+    },
+    {
+      "case_id": "G3-19",
+      "expected": "ISSUE",
+      "score_0_4": 3.49,
+      "score_0_10": 8.725000000000001,
+      "semantic_risk": 1
+    },
+    {
+      "case_id": "G3-20",
+      "expected": "HOLD",
+      "score_0_4": 2.42,
+      "score_0_10": 6.05,
+      "semantic_risk": 0.15
+    }
+  ],
+  "readability_policy": "ADVISORY ONLY: natural-language clarity does not establish source grounding; seeded G3 data has no purposely illegible/awkward adversarial cases."
 }
