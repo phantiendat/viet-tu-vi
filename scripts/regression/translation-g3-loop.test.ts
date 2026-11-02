@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { TranslationWorkflow, hashText, type GateRequest, type GateResponse } from '../../lib/translation/workflow';
+import { TranslationWorkflow, hashText, type GateRequest, type GateResponse, JudgeServiceError } from '../../lib/translation/workflow';
 
 const zh = '命宫紫微坐守';
 const source = {
@@ -114,7 +114,7 @@ test('exhausted per-segment judge-call cap holds rather than publishing', async 
   });
   const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 2 });
   assert.equal(result.status, 'HUMAN_HOLD');
-  assert.equal(result.reason, 'G3_JEV_UNAVAILABLE_OR_BUDGET');
+  assert.equal(result.reason, 'BATCH_BUDGET_EXHAUSTED');
   assert.deepEqual(seen, ['G2', 'G3']);
 });
 
@@ -125,7 +125,8 @@ test('source hash mismatch blocks before judge', async () => {
     writer: { rewritePlain: async () => { throw new Error('should not rewrite'); } },
   });
   const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 2 });
-  assert.equal(result.reason, 'INVALID_SOURCE_OR_CLAIMS');
+  assert.equal(result.reason, 'SOURCE_INTEGRITY_BLOCK');
+  assert.equal(result.status, 'BLOCKED');
   assert.equal(result.status, 'HUMAN_HOLD');
   assert.equal(called, false);
 });
@@ -139,4 +140,84 @@ test('malformed Jev response fails closed instead of throwing', async () => {
   const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 3 });
   assert.equal(result.status, 'HUMAN_HOLD');
   assert.equal(result.reason, 'G2_INVALID_JEV_RESPONSE');
+  assert.equal(result.status, 'RETRYABLE_HOLD');
+});
+
+
+test('read-only Jev-web removed fixed quota: a larger explicitly granted batch may use >7 mock evaluations', async () => {
+  let g3N = 0, revisions = 0;
+  const wf = new TranslationWorkflow([source], {
+    judge: { evaluate: async (req: GateRequest) => {
+      if (req.gate === 'G2') return passG2();
+      return g3(++g3N <= 7 ? 0.98 : 0.01);
+    } },
+    writer: { rewritePlain: async () => ({
+      plain: 'Sao Tử Vi ở cung Mệnh; bản sửa ' + ++revisions,
+      claims: [{ id: 'cl1', kind: 'SOURCE_GROUNDED' as const, text: 'Sao Tử Vi ở cung Mệnh.', sourceSpan: zh }],
+    }) }
+  });
+  const result = await wf.processSegment('sample-001', { authorized: true, maxJevCalls: 12, maxPlainRevisions: 10 });
+  assert.equal(result.status, 'PILOT_CANDIDATE');
+  assert.equal(g3N, 8);
+  assert.equal(revisions, 7);
+  assert.equal(result.jevCalls, 9); // not hard-coded to 7 or 6/min
+});
+
+test('upstream 429 is retryable with retry-after even with Jev-web rate limiter disabled', async () => {
+  let calls = 0;
+  const wf = new TranslationWorkflow([source], {
+    judge: { evaluate: async (req: GateRequest) => {
+      calls++;
+      if (calls === 1) throw new JudgeServiceError('RATE_LIMIT', 'upstream 429', 1200);
+      return req.gate === 'G2' ? passG2() : g3(0.01);
+    } },
+    writer: { rewritePlain: async () => { throw Error('not needed'); } },
+  });
+  const first = await wf.processSegment('sample-001', { authorized: true, maxJevCalls: 4 });
+  assert.equal(first.status, 'RETRYABLE_HOLD');
+  assert.equal(first.reason, 'JEV_RATE_LIMIT');
+  assert.equal(first.retryAfterMs, 1200);
+  assert.equal(wf.getEvidence('sample-001')[0].errorCode, 'RATE_LIMIT');
+  // No background automatic retry. A caller explicitly resumes after handling Retry-After.
+  const second = await wf.resumeSegment('sample-001', { authorized: true, maxJevCalls: 4 });
+  assert.equal(second.status, 'PILOT_CANDIDATE');
+  assert.equal(calls, 3);
+});
+
+test('invalid Jev score shape gets one explicit retry before human escalation', async () => {
+  let calls = 0;
+  const wf = new TranslationWorkflow([source], {
+    judge: { evaluate: async () => { calls++; return ({ model: 'jev', scores: {}, nouls: {} }) as GateResponse; } },
+    writer: { rewritePlain: async () => { throw Error('no'); } }
+  });
+  const grant = { authorized: true, maxJevCalls: 5 };
+  assert.equal((await wf.processSegment('sample-001', grant)).status, 'RETRYABLE_HOLD');
+  const second = await wf.resumeSegment('sample-001', grant);
+  assert.equal(second.status, 'HUMAN_HOLD');
+  assert.equal(second.reason, 'G2_INVALID_JEV_RESPONSE');
+  assert.equal(calls, 2);
+});
+
+test('source-integrity failure is blocked while incomplete translation claims request repair', async () => {
+  let calls = 0;
+  const deps = { judge: { evaluate: async () => { calls++; return passG2(); } },
+    writer: { rewritePlain: async () => { throw Error('no'); } } };
+  const damaged = new TranslationWorkflow([{ ...source, sourceSha: 'invalid' }], deps);
+  assert.equal((await damaged.processSegment('sample-001', { authorized: true, maxJevCalls: 3 })).status, 'BLOCKED');
+  const incomplete = new TranslationWorkflow([{ ...source, claims: [{ id: 'bad', kind: 'UNSUPPORTED_PREDICTION' as const, text: 'Chắc chắn phát tài' }] }], deps);
+  const result = await incomplete.processSegment('sample-001', { authorized: true, maxJevCalls: 3 });
+  assert.equal(result.status, 'REWORK_REQUIRED');
+  assert.equal(result.reason, 'TRANSLATION_OR_CLAIMS_NEED_REWORK');
+  assert.equal(calls, 0);
+});
+
+test('auth error stops for human action, not a blind retry loop', async () => {
+  const wf = new TranslationWorkflow([source], {
+    judge: { evaluate: async () => { throw new JudgeServiceError('AUTH', '401 invalid credentials'); } },
+    writer: { rewritePlain: async () => { throw Error('no'); } },
+  });
+  const r = await wf.processSegment('sample-001', { authorized: true, maxJevCalls: 10 });
+  assert.equal(r.status, 'HUMAN_HOLD');
+  assert.equal(r.reason, 'JEV_AUTH');
+  assert.equal(r.jevCalls, 1);
 });
