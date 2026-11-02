@@ -9,13 +9,14 @@
 - Pilot-only deterministic thresholds assess G2 fidelity/negation/omissions/contradictions; G3 readability/consistency/unsupported-addition risk.
 - G3 detects a simulated invented prediction, calls `PlainWriter.rewritePlain` once, reevaluates G3 on the changed `plain_vi`, and **does not call G2 again**.
 - Immutable source SHA validation; claim source-span existence checks, score-response shape checks, no-call-without-authorization guard; maximum 7 judge calls/segment, maximum 3 plain revisions; fail closed into `HUMAN_HOLD`.
+- A red test reproduced a crash on malformed Jev answers (missing `scores` / `nouls`); the implementation now treats missing fields as invalid evidence and returns `HUMAN_HOLD` (9/9 passing locally).
 - Budget exhaustion and tampered source hash both return `HUMAN_HOLD`; no judge request is issued for a hash mismatch.
 - No code path emits `PUBLISHED`; successfully passing the tracer only means `PILOT_CANDIDATE` awaiting G1 + human evidence.
 
 ## Verification
 
 - **Red:** Running the G3 test first failed with `ERR_MODULE_NOT_FOUND` (new workflow module missing).
-- **Green:** Eight behavior tests passed locally with Node 22 TypeScript strip-only mode and fake deterministic judge.
+- **Green:** Nine behavior tests passed locally with Node 22 TypeScript strip-only mode and fake deterministic judge.
 - **Typecheck:** Isolated `tsc --noEmit --strict --target es2022 --module esnext --moduleResolution bundler` on workflow + tests passed with local Node types.
 - `package.json` adds regression test to existing `npm test`; check actual GitHub Actions workflow results for full repository typecheck + suite.
 - This isolated checkout is a reconstruction from repo files; full `npm ci` / `npm test` / `npm run build` are **not claimed** until CI verifies.
