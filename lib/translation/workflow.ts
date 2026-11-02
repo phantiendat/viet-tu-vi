@@ -142,7 +142,7 @@ export class TranslationWorkflow {
     };
     if (row.status === 'PILOT_CANDIDATE') return finish('AWAITING_G1_AND_HUMAN_REVIEW', 'PILOT_CANDIDATE');
     // Retrying these without a repaired adapter or credential would ignore HUMAN review.
-    if (row.status === 'HUMAN_HOLD' && /^(G2|G3)_INVALID_JEV_RESPONSE$|^JEV_(AUTH|UNKNOWN)$/.test(row.reason ?? '')) {
+    if (row.status === 'HUMAN_HOLD' && /^(G2|G3)_INVALID_JEV_RESPONSE$|^JEV_(AUTH|UNKNOWN|INVALID_RESPONSE)$/.test(row.reason ?? '')) {
       return finish(row.reason ?? 'HUMAN_REVIEW_REQUIRED');
     }
     // Source integrity cannot be repaired by repeatedly asking Jev.
