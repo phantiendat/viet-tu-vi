@@ -136,9 +136,9 @@ export class TranslationWorkflow {
 
   async resumeSegment(id: string, grant: BudgetGrant): Promise<SegmentResult> {
     const row = this.requireRow(id);
-    const finish = (reason: string, status: SegmentResult['status'] = 'HUMAN_HOLD'): SegmentResult => {
+    const finish = (reason: string, status: SegmentResult['status'] = 'HUMAN_HOLD', retryAfterMs?: number): SegmentResult => {
       row.status = status; row.reason = reason;
-      return { id, status, reason, hv: row.draft.hv, plain: row.draft.plain, jevCalls: row.jevCalls };
+      return { id, status, reason, hv: row.draft.hv, plain: row.draft.plain, jevCalls: row.jevCalls, ...(retryAfterMs !== undefined ? { retryAfterMs } : {}) };
     };
     if (row.status === 'PILOT_CANDIDATE') return finish('AWAITING_G1_AND_HUMAN_REVIEW', 'PILOT_CANDIDATE');
     // Source integrity cannot be repaired by repeatedly asking Jev.
@@ -154,7 +154,7 @@ export class TranslationWorkflow {
     const plainCap = grant.maxPlainRevisions ?? 3;
     if (!Number.isSafeInteger(plainCap) || plainCap < 1) return finish('INVALID_REVISION_BUDGET');
     const cap = grant.maxJevCalls;
-    type JudgeAttempt = { ok: true; response: GateResponse } | { ok: false; reason: string; status: SegmentResult['status'] };
+    type JudgeAttempt = { ok: true; response: GateResponse } | { ok: false; reason: string; status: SegmentResult['status']; retryAfterMs?: number };
     const evaluate = async (gate: Gate, fingerprint: string): Promise<JudgeAttempt> => {
       if (row.jevCalls >= cap) return { ok: false, reason: 'BATCH_BUDGET_EXHAUSTED', status: 'HUMAN_HOLD' };
       // Count before call; even a failed request may incur provider cost.
@@ -175,7 +175,7 @@ export class TranslationWorkflow {
             ? 'RETRYABLE_HOLD' : code === 'INVALID_REQUEST'
             ? 'REWORK_REQUIRED' : 'HUMAN_HOLD';
         row.evidence.push({ gate, fingerprint, model: 'unknown', errorCode: code, outcome: status === 'RETRYABLE_HOLD' ? 'RETRYABLE_HOLD' : 'HUMAN_HOLD' });
-        return { ok: false, reason: 'JEV_' + code, status };
+        return { ok: false, reason: 'JEV_' + code, status, ...(error instanceof JudgeServiceError && error.retryAfterMs !== undefined ? { retryAfterMs: error.retryAfterMs } : {}) };
       }
     };
     const malformed = (gate: Gate, fingerprint: string): SegmentResult => {
@@ -187,8 +187,9 @@ export class TranslationWorkflow {
     const g2Key = key(['G2-v2.2-pilot', row.draft.sourceSha, row.draft.context, row.draft.hv, row.draft.glossarySha]);
     if (row.approvedG2Fingerprint !== g2Key) {
       const attempt = await evaluate('G2', g2Key);
-      if (!attempt.ok) return finish(attempt.reason, attempt.status);
+      if (!attempt.ok) return finish(attempt.reason, attempt.status, attempt.retryAfterMs);
       const verdict = attempt.response;
+      if (!verdict || typeof verdict.model !== 'string' || !verdict.model) return malformed('G2', g2Key);
       const fidelity = good(verdict, 'fidelity');
       const conditions = good(verdict, 'conditions_preserved');
       const omission = risk(verdict, 'omission_risk');
@@ -204,8 +205,9 @@ export class TranslationWorkflow {
       const d = row.draft;
       const g3Key = key(['G3-v2.2-pilot', d.sourceSha, d.context, d.hv, d.glossarySha, d.plain, d.claims]);
       const attempt = await evaluate('G3', g3Key);
-      if (!attempt.ok) return finish(attempt.reason, attempt.status);
+      if (!attempt.ok) return finish(attempt.reason, attempt.status, attempt.retryAfterMs);
       const verdict = attempt.response;
+      if (!verdict || typeof verdict.model !== 'string' || !verdict.model) return malformed('G3', g3Key);
       const readability = good(verdict, 'readability');
       const consistency = good(verdict, 'consistency');
       const invented = risk(verdict, 'unsupported_additions');
