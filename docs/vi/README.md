@@ -4,6 +4,8 @@
 
 **Quy trình Việt hóa chính thức ở mức THIẾT KẾ:** [Translation Quality Loop V2.2](TRANSLATION_QUALITY_V22.md), [review theo Matt Pocock](REVIEWS/V22_MATT_POCOCK_DESIGN_REVIEW_2026-11-02.md). Các thiết kế V1/V2/V2.1 chỉ là lịch sử. **Không dùng Weblate.** Chưa có bộ máy dịch được triển khai và kiểm định theo V2.2; không xuất bản bản dịch chưa có evidence đầy đủ.
 
+**Đánh giá Jev-web sau xuất bản tài liệu V2.2:** [báo cáo Jev thực tế](REVIEWS/V22_JEV_LIVE_POST_PUBLICATION_2026-11-02.md) — 8,49/10 (so cùng tiêu chí V2.1: 7,84/10), **chỉ chấm thiết kế, không chứng nhận chất lượng bản dịch**.
+
 ## Mục tiêu
 
 Xây dựng ứng dụng Tử Vi Đẩu Số tiếng Việt trên mã nguồn hiện có, ưu tiên **tính đúng và kiểm chứng được** trước khi mở rộng giao diện hoặc luận giải AI.
