@@ -77,3 +77,18 @@ Reference baseline before R01: **1.69/10** using identical axis/rubric, compared
 **R01 code changed and Ponytail+Jev re-review done; do NOT merge PR #4 until the 19 tests and typecheck are verified.** Once test evidence is available, reconsider merge **only as a clearly marked in-memory pilot**, not a working multi-user Jev integration. No astrology engine code, real Jev adapter, or production release has been changed by this review.
 
 **Pending explicit owner merge approval** even if CI later passes.
+
+## Follow-up evidence — ISOLATED TESTS EXECUTED 2026-11-02
+
+**This updates the earlier 'no test-run log' blocker for the T01 subset, but not the full repository CI blocker.**
+
+- Exact source blobs were reconstructed from GitHub, with Git object hashes verified:
+  - `lib/translation/workflow.ts` — `26a7508af3aa0801dba27baad5c529e9e87a27b4`
+  - `scripts/regression/translation-g3-loop.test.ts` — `be72f004d08d2ff74a735ef3095803725781709d`
+  - These hashes match the PR's file blobs after R01 (the later commits modify only documentation).
+- Node `v22.16.0`, TypeScript `5.8.3`. Both files passed **isolated strict TS noEmit** with key repo compiler options: `target=es2017`, `module=esnext`, `moduleResolution=bundler`, `lib=dom,dom.iterable,esnext`.
+- Both files were compiled to isolated CommonJS using `tsc --strict` and executed with `node --test`: **19 passed, 0 failed, 0 skipped**.
+- Full TAP output is saved in [R01_T01_ISOLATED_TEST_LOG_2026-11-02.txt](R01_T01_ISOLATED_TEST_LOG_2026-11-02.txt).
+- **Not run:** `npm ci`, complete `npm run typecheck`, full `npm test`, and `npm run build`. The isolated environment has no DNS access to `github.com` or `registry.npmjs.org`. GitHub Actions API showed **0 workflow runs** for the repo. Therefore there is still **no whole-app CI/build evidence**.
+
+**Revised decision:** R01's 19 dedicated regression tests and isolated typecheck are **verified PASS**; remaining requirement for full PR merge remains full project CI/build and a review of the complete app. Re-running Jev on this documentary evidence is optional; the prior Jev 4.31/10 was a code-summary review before execution and **must not be silently revised to a new number**. Keep Draft PR #4.
