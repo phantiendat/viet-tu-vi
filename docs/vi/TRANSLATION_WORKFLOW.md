@@ -2,6 +2,8 @@
 
 Trạng thái: **quy trình đề xuất**, chưa có dữ liệu dịch mẫu được chấm Jev và chưa phát hành bản dịch. Định hướng: **không dùng Weblate**, dùng GitHub + bảng thuật ngữ + duyệt từng đợt.
 
+> **Đề xuất nâng cấp đang chờ duyệt:** [JEV Translation Quality Loop V2 — ba checkpoint và vòng sửa từng đoạn](JEV_LOOP_V2_PROPOSAL.md). Tài liệu V2 là proposal, chưa thay thế release policy hiện hành.
+
 ## Người tham gia
 
 - **Người dịch/AI dịch:** tạo bản dịch ba phần (nguyên văn Trung; bản Việt sát nghĩa; diễn giải dễ hiểu), không tự sửa thuật toán.
