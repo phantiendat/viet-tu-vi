@@ -113,12 +113,43 @@ All retry edges above are conditional on the **global circuit breaker** below. N
 
 **Pilot budgets (provisional defaults; should be configurable and signed off per batch):**
 - `max_hv_revisions_per_segment = 3`; `max_plain_revisions_per_segment = 3`.
-- `max_paid_jev_calls_per_segment = 7` for G2/G3 combined; G1 budget separately `max_jev_calls_per_changed_term = 1` unless human authorizes exception.
+- **Không còn hard-cap của Jev-web**: read-only `jev_status` ngày 2026-11-02 xác nhận `rate_limiting_enabled=false`, `requests_per_minute=null`, `requests_per_utc_day=null`. Số 6/phút và 60/ngày trong các review cũ chỉ là lịch sử.
+- `max_paid_jev_calls_per_segment` là **ngân sách do ứng dụng/người dùng phê duyệt theo đợt**, không phải trần cố định của nhà cung cấp. Đề xuất mặc định cho pilot 7 lượt G2/G3 mỗi đoạn; có thể tăng có kiểm soát bằng grant mới và bộ kiểm thử. G1 mặc định một lượt mỗi thuật ngữ thay đổi, ngoại lệ cần approval.
+- Lượt gọi quá grant vẫn `HUMAN_HOLD`, dù upstream không giới hạn tốc độ.
 - `max_jev_calls_per_batch = min(user_authorized_cap, live service capacity)`; `max_cost_usd_per_batch` user-configured, **default 0** until explicit approval.
 - `max_repeated_same_fingerprint = 1`; exact same revision is read from cache, never charged again.
 - Stagnation: two attempts with no substantive edit/clear error correction -> HUMAN_HOLD. Error/429/quota/network/invalid Jev schema -> pause with resumable `HOLD`, **do not retry with charge_authorized unless consent/budget remains valid**.
 - All counters persisted per segment and per batch with idempotency keys. `JevJudgeAdapter` has request fingerprint; worker locks/transaction prevent duplicate charges on concurrent resumes.
-- Site status at review: limit **6 requests/minute, 60/day**; inspect `jev_status` at run time and do not assume quota guarantees capacity.
+- **Không suy diễn không có rate limiter = không thể gặp 429**: OpenRouter, TypeSafe, mạng, tài khoản hoặc hạ tầng vẫn có thể trả 429/503. Dùng `Retry-After` nếu có, pause/resume bằng grant còn hiệu lực, không tự lặp vô hạn; kiểm tra `jev_status` thực tế.
+- Không hardcode hạn mức bên ngoài, nhưng vẫn thực thi an toàn chi phí, số revision, duplicate suppression, timeout và human sign-off.
+
+
+## Expanded error gate — nguồn lỗi quyết định tuyến xử lý
+
+Để tránh quy mọi lỗi thành một `HOLD` không giải thích được, hệ thống tách **loại lỗi** và **trạng thái tiếp tục**, trong khi giữ nguyên nguyên tắc fail-closed. Bảng dưới đây là chính sách triển khai; prototype T01 mới hiện thực hóa **một phần**.
+
+| Nhóm lỗi | Ví dụ | Trạng thái | Hành động có căn cứ |
+| --- | --- | --- | --- |
+| `SOURCE_INTEGRITY` | Hash nguồn sai, nội dung không có quyền dùng, định danh sao/cung gốc bị sửa | **BLOCKED** | Dừng trước Jev; người quản lý nguồn xác minh và nhập lại nguồn bất biến |
+| `INPUT_REPAIRABLE` | Plain text rỗng, danh sách claim thiếu reference, alias chưa khớp | **REWORK_REQUIRED** | Trả về công đoạn sinh dữ liệu/từ điển, sửa bản mới; không gửi payload hỏng cho Jev |
+| `G2_MEANING_ERROR` | Dịch đảo phủ định/đổi sao có chứng cứ trích nguyên văn | **REWORK_HV** | Sửa riêng HV; mất hiệu lực G2/G3 của đoạn |
+| `G3_EXTRA_CLAIM` | Plain thêm dự đoán không có trong source | **REWORK_PLAIN** | Sửa riêng plain; giữ G2 theo hash |
+| `PROVIDER_TRANSIENT` | Upstream 429/502/503, timeout, lỗi kết nối | **RETRYABLE_HOLD** | Ghi mã lỗi và Retry-After nếu có; caller **chủ động** resume, có grant; không tự động gọi vô hạn |
+| `JEV_RESPONSE_SCHEMA` | Thiếu scores/nouls, phân phối sai độ dài, sai dữ liệu | **RETRYABLE_HOLD** một lần | Giữ response/evidence, cho một lượt thử lại có approval; lặp lại thì **HUMAN_HOLD** để sửa adapter/schema |
+| `AUTH_CONFIGURATION` | 401/403, API key hỏng, cấu hình model sai | **HUMAN_HOLD** | Sửa cấu hình/quyền trước khi tiếp tục; không dùng retry tuyến tính |
+| `SEMANTIC_AMBIGUITY` | Nguồn Hán không rõ, khác biệt trường phái, claim không chứng minh được | **HUMAN_HOLD** | Gửi đoạn + nguồn + dị bản cho người duyệt; không tự nâng điểm |
+| `APPLICATION_BUDGET` | Hết grant chi phí / số lượt tối đa của **đợt** | **HUMAN_HOLD** | Báo chi phí và kết quả đã có; chỉ tiếp tục nếu cấp grant mới |
+| `STALE_APPROVAL` | Plain/glossary sửa sau khi duyệt | **HUMAN_HOLD** | Invalidate các checkpoint phụ thuộc, đánh giá bản revision mới |
+
+**Lưu ý:** phân loại một lỗi dữ liệu *không có nghĩa* được phép làm sạch tự động mọi lỗi: sai nguồn hoặc sai phép dùng vẫn là `BLOCKED`. `HUMAN_HOLD`, `RETRYABLE_HOLD` và `REWORK_REQUIRED` đều **không thể xuất bản**. Không chuyển Jev network failure thành `PASS`; không coi `429` là hết quota của Jev-web nếu chưa có bằng chứng nguồn lỗi. Gắn source/error code/attempt/grant vào evidence.
+
+### Graceful degradation và resume
+
+1. Giữ nguyên `source_sha, glossary_sha, hv_sha, plain_sha, gate_spec_sha, request_fingerprint` mỗi lần tạm dừng.
+2. Khi provider có `retryAfterMs`, ưu tiên thời gian đó; khi không có, dùng chính sách backoff có giới hạn ở *scheduler* tương lai. T01 **không có** scheduler hoặc background retry.
+3. Chỉ resume trên cùng revision khi đã xử lý điều kiện lỗi, grant còn hợp lệ và budget chưa hết; khi thông số thay đổi phải chấm lại các gate phụ thuộc.
+4. Audit trả về `last_valid_gate, failure_category, next_action, attempts_spent, authorization_scope`.
+5. Tối thiểu một vòng kiểm thử bằng fake JudgeAdapter cho mỗi loại lỗi; kiểm thử thực tế bằng Jev chỉ sau khi user cấp phép chi phí rõ ràng.
 
 ## GateDecision truth table (fail-closed)
 
