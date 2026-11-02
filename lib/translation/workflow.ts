@@ -116,6 +116,8 @@ function key(parts: unknown[]): string { return hashText(JSON.stringify(parts));
  */
 export class TranslationWorkflow {
   private readonly rows = new Map<string, MutableState>();
+  // Single-flight within this instance only. Durable multi-worker dedup is T02.
+  private readonly inFlight = new Map<string, Promise<SegmentResult>>();
   private readonly deps: { judge: JudgeAdapter; writer: PlainWriter };
   constructor(segments: readonly SourceSegment[], deps: { judge: JudgeAdapter; writer: PlainWriter }) {
     this.deps = deps;
@@ -134,15 +136,32 @@ export class TranslationWorkflow {
 
   processSegment(id: string, grant: BudgetGrant): Promise<SegmentResult> { return this.resumeSegment(id, grant); }
 
-  async resumeSegment(id: string, grant: BudgetGrant): Promise<SegmentResult> {
+  resumeSegment(id: string, grant: BudgetGrant): Promise<SegmentResult> {
+    this.requireRow(id);
+    const pending = this.inFlight.get(id);
+    if (pending) return pending;
+    // Delay the first step until the lock is registered. Concurrent callers
+    // receive the same result without a second Jev charge for this segment.
+    const work = Promise.resolve().then(() => this.runSegment(id, grant));
+    this.inFlight.set(id, work);
+    void work.finally(() => {
+      if (this.inFlight.get(id) === work) this.inFlight.delete(id);
+    }).catch(() => { /* the original work Promise carries the error */ });
+    return work;
+  }
+
+  private async runSegment(id: string, grant: BudgetGrant): Promise<SegmentResult> {
     const row = this.requireRow(id);
     const finish = (reason: string, status: SegmentResult['status'] = 'HUMAN_HOLD', retryAfterMs?: number): SegmentResult => {
       row.status = status; row.reason = reason;
       return { id, status, reason, hv: row.draft.hv, plain: row.draft.plain, jevCalls: row.jevCalls, ...(retryAfterMs !== undefined ? { retryAfterMs } : {}) };
     };
     if (row.status === 'PILOT_CANDIDATE') return finish('AWAITING_G1_AND_HUMAN_REVIEW', 'PILOT_CANDIDATE');
-    // Retrying these without a repaired adapter or credential would ignore HUMAN review.
-    if (row.status === 'HUMAN_HOLD' && /^(G2|G3)_INVALID_JEV_RESPONSE$|^JEV_(AUTH|UNKNOWN|INVALID_RESPONSE)$/.test(row.reason ?? '')) {
+    // Keep an evaluated failure terminal for its unchanged revision. Only
+    // missing/expired authorization or an application budget may be re-granted.
+    // A corrected translation must be supplied as a new segment revision (T02).
+    const regrantable = new Set(['NOT_STARTED', 'NO_AUTHORIZATION', 'INVALID_OR_EXHAUSTED_BUDGET', 'INVALID_REVISION_BUDGET', 'BATCH_BUDGET_EXHAUSTED']);
+    if (row.status === 'HUMAN_HOLD' && !regrantable.has(row.reason ?? '')) {
       return finish(row.reason ?? 'HUMAN_REVIEW_REQUIRED');
     }
     // Source integrity cannot be repaired by repeatedly asking Jev.
