@@ -129,3 +129,14 @@ test('source hash mismatch blocks before judge', async () => {
   assert.equal(result.status, 'HUMAN_HOLD');
   assert.equal(called, false);
 });
+
+
+test('malformed Jev response fails closed instead of throwing', async () => {
+  const workflow = new TranslationWorkflow([source], {
+    judge: { evaluate: async () => ({ model: 'fake-bad', scores: undefined, nouls: undefined }) as unknown as GateResponse },
+    writer: { rewritePlain: async () => { throw new Error('not invoked'); } },
+  });
+  const result = await workflow.processSegment('sample-001', { authorized: true, maxJevCalls: 3 });
+  assert.equal(result.status, 'HUMAN_HOLD');
+  assert.equal(result.reason, 'G2_INVALID_JEV_RESPONSE');
+});
