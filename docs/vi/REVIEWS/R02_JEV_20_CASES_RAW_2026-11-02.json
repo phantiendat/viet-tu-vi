@@ -1,0 +1,750 @@
+{
+  "run_id": "r02-pilot-2026-11-02",
+  "fixture_blob_sha": "6535100b4452d224e58f24946be617562c460001",
+  "fixture_file": "scripts/regression/fixtures/translation-r02-seeded-20.json",
+  "label_quality": "ASSISTANT_SEEDED_NOT_HUMAN_EXPERT_GOLD",
+  "threshold_policy": {
+    "risk_ge_flag": 0.7,
+    "risk_le_clear": 0.3,
+    "ambiguity_ge_human_hold": 0.3,
+    "intermediate": "REVIEW",
+    "priority": "if ambiguity_noul>=0.3 -> HUMAN_HOLD; else risk>=0.7 FLAG; else risk<=0.3 CLEAR; else REVIEW",
+    "calibrated": false,
+    "production_release_permitted": false
+  },
+  "model": "typesafe/jev-1.14-20261014",
+  "metrics": {
+    "total": 20,
+    "binary": 17,
+    "hold": 3,
+    "issues": 9,
+    "clean": 8,
+    "issues_flagged": 9,
+    "issues_review": 0,
+    "issues_cleared": 0,
+    "issues_held": 0,
+    "clean_cleared": 8,
+    "clean_review": 0,
+    "clean_flagged": 0,
+    "clean_held": 0,
+    "holds_manual": 3,
+    "cost_usd": 0.0005124,
+    "request_count": 9
+  },
+  "predictions": [
+    {
+      "case_id": "G2-01",
+      "gate": "G2",
+      "expected": "CLEAN",
+      "fault": "none",
+      "risk_noul": 0.12,
+      "ambiguity_noul": 0.05,
+      "triage": "CLEAR",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-02",
+      "gate": "G2",
+      "expected": "CLEAN",
+      "fault": "none",
+      "risk_noul": 0.03,
+      "ambiguity_noul": 0.04,
+      "triage": "CLEAR",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-03",
+      "gate": "G2",
+      "expected": "CLEAN",
+      "fault": "none",
+      "risk_noul": 0.04,
+      "ambiguity_noul": 0.04,
+      "triage": "CLEAR",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-04",
+      "gate": "G2",
+      "expected": "CLEAN",
+      "fault": "none",
+      "risk_noul": 0.02,
+      "ambiguity_noul": 0.05,
+      "triage": "CLEAR",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-05",
+      "gate": "G2",
+      "expected": "ISSUE",
+      "fault": "negation_inverted",
+      "risk_noul": 1,
+      "ambiguity_noul": 0.04,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-06",
+      "gate": "G2",
+      "expected": "ISSUE",
+      "fault": "star_swapped",
+      "risk_noul": 1,
+      "ambiguity_noul": 0.04,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-07",
+      "gate": "G2",
+      "expected": "ISSUE",
+      "fault": "negation_inverted",
+      "risk_noul": 1,
+      "ambiguity_noul": 0.04,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-08",
+      "gate": "G2",
+      "expected": "ISSUE",
+      "fault": "clause_omitted",
+      "risk_noul": 1,
+      "ambiguity_noul": 0.07,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-09",
+      "gate": "G2",
+      "expected": "HOLD",
+      "fault": "ambiguous_classical_term",
+      "risk_noul": 0.12,
+      "ambiguity_noul": 0.76,
+      "triage": "HUMAN_HOLD",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G2-10",
+      "gate": "G2",
+      "expected": "HOLD",
+      "fault": "disputed_historical_reading",
+      "risk_noul": 0.17,
+      "ambiguity_noul": 0.79,
+      "triage": "HUMAN_HOLD",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-11",
+      "gate": "G3",
+      "expected": "CLEAN",
+      "fault": "none",
+      "risk_noul": 0.04,
+      "ambiguity_noul": 0.04,
+      "triage": "CLEAR",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-12",
+      "gate": "G3",
+      "expected": "CLEAN",
+      "fault": "none",
+      "risk_noul": 0.02,
+      "ambiguity_noul": 0.05,
+      "triage": "CLEAR",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-13",
+      "gate": "G3",
+      "expected": "CLEAN",
+      "fault": "none",
+      "risk_noul": 0.03,
+      "ambiguity_noul": 0.04,
+      "triage": "CLEAR",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-14",
+      "gate": "G3",
+      "expected": "CLEAN",
+      "fault": "none",
+      "risk_noul": 0.04,
+      "ambiguity_noul": 0.05,
+      "triage": "CLEAR",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-15",
+      "gate": "G3",
+      "expected": "ISSUE",
+      "fault": "unsupported_prediction",
+      "risk_noul": 0.99,
+      "ambiguity_noul": 0.05,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-16",
+      "gate": "G3",
+      "expected": "ISSUE",
+      "fault": "negation_inverted",
+      "risk_noul": 1,
+      "ambiguity_noul": 0.04,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-17",
+      "gate": "G3",
+      "expected": "ISSUE",
+      "fault": "star_swapped",
+      "risk_noul": 1,
+      "ambiguity_noul": 0.04,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-18",
+      "gate": "G3",
+      "expected": "ISSUE",
+      "fault": "clause_omitted",
+      "risk_noul": 0.99,
+      "ambiguity_noul": 0.05,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-19",
+      "gate": "G3",
+      "expected": "ISSUE",
+      "fault": "unsupported_prediction",
+      "risk_noul": 1,
+      "ambiguity_noul": 0.04,
+      "triage": "FLAG",
+      "correct_for_seeded_labels": true
+    },
+    {
+      "case_id": "G3-20",
+      "gate": "G3",
+      "expected": "HOLD",
+      "fault": "ambiguous_classical_term",
+      "risk_noul": 0.15,
+      "ambiguity_noul": 0.58,
+      "triage": "HUMAN_HOLD",
+      "correct_for_seeded_labels": true
+    }
+  ],
+  "raw_requests": [
+    {
+      "batch_index": 1,
+      "case_ids": [
+        "G2-01",
+        "G2-02",
+        "G2-03",
+        "G2-04",
+        "G2-05"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614773-aPVYaKKmktmLoBLKLGbj",
+      "diagnostic_id": "101b2ee1-97ad-4f19-a373-5bf958dd6f76",
+      "usage": {
+        "input_tokens": 1430,
+        "output_tokens": 109,
+        "cost": 0.00006006
+      },
+      "answers": {
+        "risk_g2_01": {
+          "type": "noul",
+          "noul": 0.12
+        },
+        "risk_g2_02": {
+          "type": "noul",
+          "noul": 0.03
+        },
+        "risk_g2_03": {
+          "type": "noul",
+          "noul": 0.04
+        },
+        "risk_g2_04": {
+          "type": "noul",
+          "noul": 0.02
+        },
+        "risk_g2_05": {
+          "type": "noul",
+          "noul": 1
+        }
+      }
+    },
+    {
+      "batch_index": 2,
+      "case_ids": [
+        "G2-06",
+        "G2-07",
+        "G2-08",
+        "G2-09",
+        "G2-10"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614776-uUQRDmS9e9F8ezf67ezs",
+      "diagnostic_id": "80cc5498-c9c9-4009-8430-b169bd74f601",
+      "usage": {
+        "input_tokens": 1634,
+        "output_tokens": 151,
+        "cost": 0.000068628
+      },
+      "answers": {
+        "risk_g2_06": {
+          "type": "noul",
+          "noul": 1
+        },
+        "risk_g2_07": {
+          "type": "noul",
+          "noul": 1
+        },
+        "risk_g2_08": {
+          "type": "noul",
+          "noul": 1
+        },
+        "risk_g2_09": {
+          "type": "noul",
+          "noul": 0.12
+        },
+        "amb_g2_09": {
+          "type": "noul",
+          "noul": 0.55
+        },
+        "risk_g2_10": {
+          "type": "noul",
+          "noul": 0.17
+        },
+        "amb_g2_10": {
+          "type": "noul",
+          "noul": 0.68
+        }
+      }
+    },
+    {
+      "batch_index": 3,
+      "case_ids": [
+        "G3-11",
+        "G3-12",
+        "G3-13",
+        "G3-14",
+        "G3-15"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614780-knUR2zXQ9TSOi5RD98pT",
+      "diagnostic_id": "6ca7e7fd-8657-45ea-91b1-0d5929256bca",
+      "usage": {
+        "input_tokens": 1422,
+        "output_tokens": 109,
+        "cost": 0.000059724
+      },
+      "answers": {
+        "risk_g3_11": {
+          "type": "noul",
+          "noul": 0.04
+        },
+        "risk_g3_12": {
+          "type": "noul",
+          "noul": 0.02
+        },
+        "risk_g3_13": {
+          "type": "noul",
+          "noul": 0.03
+        },
+        "risk_g3_14": {
+          "type": "noul",
+          "noul": 0.04
+        },
+        "risk_g3_15": {
+          "type": "noul",
+          "noul": 0.99
+        }
+      }
+    },
+    {
+      "batch_index": 4,
+      "case_ids": [
+        "G3-16",
+        "G3-17",
+        "G3-18",
+        "G3-19",
+        "G3-20"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614786-Oo7ZylwkA4uVgH2ngiRw",
+      "diagnostic_id": "b8f13adf-fcb8-46d3-9078-95878580eeb1",
+      "usage": {
+        "input_tokens": 1555,
+        "output_tokens": 130,
+        "cost": 0.00006531
+      },
+      "answers": {
+        "risk_g3_16": {
+          "type": "noul",
+          "noul": 1
+        },
+        "risk_g3_17": {
+          "type": "noul",
+          "noul": 1
+        },
+        "risk_g3_18": {
+          "type": "noul",
+          "noul": 0.99
+        },
+        "risk_g3_19": {
+          "type": "noul",
+          "noul": 1
+        },
+        "risk_g3_20": {
+          "type": "noul",
+          "noul": 0.15
+        },
+        "amb_g3_20": {
+          "type": "noul",
+          "noul": 0.48
+        }
+      }
+    }
+  ],
+  "evaluation_extension": "All 20 cases receive ambiguity screening, not selected using provisional expected labels; policy uses ONLY two Jev probabilities, without reference labels. The earlier stored raw G2/G3 risk answers were preserved. Known unresolved domain terms also need a separate vetted glossary preflight in real applications.",
+  "ambiguity_all_cases_requests": [
+    {
+      "batch_index": 1,
+      "case_ids": [
+        "G2-01",
+        "G2-02",
+        "G2-03",
+        "G2-04",
+        "G2-05",
+        "G2-06",
+        "G2-07"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614868-RzUsxLF4B4pUXNlqsJGU",
+      "diagnostic_id": "a1aa1a65-e1c6-40b5-9384-89e1a5ca92b4",
+      "usage": {
+        "input_tokens": 1279,
+        "output_tokens": 151,
+        "cost": 0.000053718
+      },
+      "answers": {
+        "amb_g2_01": {
+          "noul": 0.05
+        },
+        "amb_g2_02": {
+          "noul": 0.04
+        },
+        "amb_g2_03": {
+          "noul": 0.04
+        },
+        "amb_g2_04": {
+          "noul": 0.05
+        },
+        "amb_g2_05": {
+          "noul": 0.04
+        },
+        "amb_g2_06": {
+          "noul": 0.04
+        },
+        "amb_g2_07": {
+          "noul": 0.04
+        }
+      }
+    },
+    {
+      "batch_index": 2,
+      "case_ids": [
+        "G2-08",
+        "G2-09",
+        "G2-10",
+        "G3-11",
+        "G3-12",
+        "G3-13",
+        "G3-14"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614871-0Rk2kSwr1uGFQVkplIJR",
+      "diagnostic_id": "ad93218e-b4e0-415b-9a16-01579dd7234d",
+      "usage": {
+        "input_tokens": 1277,
+        "output_tokens": 151,
+        "cost": 0.000053634
+      },
+      "answers": {
+        "amb_g2_08": {
+          "noul": 0.07
+        },
+        "amb_g2_09": {
+          "noul": 0.76
+        },
+        "amb_g2_10": {
+          "noul": 0.79
+        },
+        "amb_g3_11": {
+          "noul": 0.04
+        },
+        "amb_g3_12": {
+          "noul": 0.05
+        },
+        "amb_g3_13": {
+          "noul": 0.04
+        },
+        "amb_g3_14": {
+          "noul": 0.05
+        }
+      }
+    },
+    {
+      "batch_index": 3,
+      "case_ids": [
+        "G3-15",
+        "G3-16",
+        "G3-17",
+        "G3-18",
+        "G3-19",
+        "G3-20"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793614874-Ux41VBe6PSHTqPfVaSBl",
+      "diagnostic_id": "636e7ff6-1c2a-4ecb-9ec1-d2411f68e574",
+      "usage": {
+        "input_tokens": 1156,
+        "output_tokens": 130,
+        "cost": 0.000048552
+      },
+      "answers": {
+        "amb_g3_15": {
+          "noul": 0.05
+        },
+        "amb_g3_16": {
+          "noul": 0.04
+        },
+        "amb_g3_17": {
+          "noul": 0.04
+        },
+        "amb_g3_18": {
+          "noul": 0.05
+        },
+        "amb_g3_19": {
+          "noul": 0.04
+        },
+        "amb_g3_20": {
+          "noul": 0.58
+        }
+      }
+    }
+  ],
+  "bias_note": "Initial evaluation requested ambiguity judgments only for expected HOLD labels. Results above supersede that routing with new blind-to-label ambiguity judgment for ALL 20 cases. These synthetic labels are still provisional, NOT expert-certified.",
+  "g3_readability_evaluations": [
+    {
+      "case_ids": [
+        "G3-11",
+        "G3-12",
+        "G3-13",
+        "G3-14",
+        "G3-15"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793615208-uY1UrZh2CKdZTAtu22Qr",
+      "usage": {
+        "input_tokens": 1218,
+        "output_tokens": 94,
+        "cost": 0.000051156
+      },
+      "answers": {
+        "read_g3_11": {
+          "score": 3.43,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.1,
+            "3": 0.32,
+            "4": 0.57
+          }
+        },
+        "read_g3_12": {
+          "score": 3.46,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.08,
+            "3": 0.36,
+            "4": 0.55
+          }
+        },
+        "read_g3_13": {
+          "score": 3.45,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.09,
+            "3": 0.34,
+            "4": 0.56
+          }
+        },
+        "read_g3_14": {
+          "score": 3.24,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.15,
+            "3": 0.43,
+            "4": 0.41
+          }
+        },
+        "read_g3_15": {
+          "score": 3.43,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.08,
+            "3": 0.38,
+            "4": 0.53
+          }
+        }
+      }
+    },
+    {
+      "case_ids": [
+        "G3-16",
+        "G3-17",
+        "G3-18",
+        "G3-19",
+        "G3-20"
+      ],
+      "model": "typesafe/jev-1.14-20261014",
+      "request_id": "gen-dec-1793615294-XRBfN8Z11rHOQ2xsCI0S",
+      "usage": {
+        "input_tokens": 1229,
+        "output_tokens": 94,
+        "cost": 0.000051618
+      },
+      "answers": {
+        "read_g3_16": {
+          "score": 3.45,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.09,
+            "3": 0.35,
+            "4": 0.55
+          }
+        },
+        "read_g3_17": {
+          "score": 3.49,
+          "probabilities": {
+            "0": 0,
+            "1": 0,
+            "2": 0.08,
+            "3": 0.33,
+            "4": 0.59
+          }
+        },
+        "read_g3_18": {
+          "score": 3.52,
+          "probabilities": {
+            "0": 0,
+            "1": 0.01,
+            "2": 0.07,
+            "3": 0.32,
+            "4": 0.6
+          }
+        },
+        "read_g3_19": {
+          "score": 3.49,
+          "probabilities": {
+            "0": 0,
+            "1": 0,
+            "2": 0.07,
+            "3": 0.35,
+            "4": 0.58
+          }
+        },
+        "read_g3_20": {
+          "score": 2.42,
+          "probabilities": {
+            "0": 0,
+            "1": 0.07,
+            "2": 0.51,
+            "3": 0.34,
+            "4": 0.08
+          }
+        }
+      }
+    }
+  ],
+  "g3_readability_scores": [
+    {
+      "case_id": "G3-11",
+      "expected": "CLEAN",
+      "score_0_4": 3.43,
+      "score_0_10": 8.575000000000001,
+      "semantic_risk": 0.04
+    },
+    {
+      "case_id": "G3-12",
+      "expected": "CLEAN",
+      "score_0_4": 3.46,
+      "score_0_10": 8.65,
+      "semantic_risk": 0.02
+    },
+    {
+      "case_id": "G3-13",
+      "expected": "CLEAN",
+      "score_0_4": 3.45,
+      "score_0_10": 8.625,
+      "semantic_risk": 0.03
+    },
+    {
+      "case_id": "G3-14",
+      "expected": "CLEAN",
+      "score_0_4": 3.24,
+      "score_0_10": 8.100000000000001,
+      "semantic_risk": 0.04
+    },
+    {
+      "case_id": "G3-15",
+      "expected": "ISSUE",
+      "score_0_4": 3.43,
+      "score_0_10": 8.575000000000001,
+      "semantic_risk": 0.99
+    },
+    {
+      "case_id": "G3-16",
+      "expected": "ISSUE",
+      "score_0_4": 3.45,
+      "score_0_10": 8.625,
+      "semantic_risk": 1
+    },
+    {
+      "case_id": "G3-17",
+      "expected": "ISSUE",
+      "score_0_4": 3.49,
+      "score_0_10": 8.725000000000001,
+      "semantic_risk": 1
+    },
+    {
+      "case_id": "G3-18",
+      "expected": "ISSUE",
+      "score_0_4": 3.52,
+      "score_0_10": 8.8,
+      "semantic_risk": 0.99
+    },
+    {
+      "case_id": "G3-19",
+      "expected": "ISSUE",
+      "score_0_4": 3.49,
+      "score_0_10": 8.725000000000001,
+      "semantic_risk": 1
+    },
+    {
+      "case_id": "G3-20",
+      "expected": "HOLD",
+      "score_0_4": 2.42,
+      "score_0_10": 6.05,
+      "semantic_risk": 0.15
+    }
+  ],
+  "readability_policy": "ADVISORY ONLY: natural-language clarity does not establish source grounding; seeded G3 data has no purposely illegible/awkward adversarial cases."
+}

@@ -1,8 +1,50 @@
 # Translation Quality Loop V2.2 — Canonical DESIGN policy
 
-**Version:** v2.2-spec. **Status:** PUBLISHED DESIGN ONLY / NOT IMPLEMENTED / NO AUTOMATED RELEASE AUTHORIZATION.
+**Version:** v2.2-r02-approved-pilot-design (2026-11-02). **Status:** APPROVED FOR TEST-ONLY DESIGN/SEED EVALUATION; NOT MERGED, NOT DEPLOYED, NO RELEASE AUTHORIZATION.
 **Scope:** dịch nguyên văn tiếng Trung về Tử Vi Đẩu Số sang Hán–Việt và lời giải thích tiếng Việt phổ thông trên `phantiendat/viet-tu-vi`. **Không** dùng Weblate, không tự ý can thiệp bộ máy lập lá số.
 **Approval policy:** Tài liệu này là nguồn quy tắc duy nhất cho workflow dịch **sau khi được merge vào main**. Để phát hành nội dung dịch thật cần có implementation, dữ liệu test, Jev evidence và human sign-off; design approval không thay thế các bằng chứng đó.
+
+## R02 — GPT-6 single translator, Jev as specialized RISK checkpoints (APPROVED FOR PILOT)
+
+**Precedence:** This R02 section supersedes the older G1/G2/G3 automatic-judge workflow descriptions below in this draft branch. It does **not** declare the historical V2.2 workflow production-ready. The earlier Mermaid design is retained as a historical reference only. PR #4 stays Draft; human merge/release approval is separate.
+
+### Roles and routing
+
+| Stage | Owner / scope | Jev role | Pilot decision |
+| --- | --- | --- | --- |
+| G0: integrity | Deterministic code checks original Chinese, provenance/license, hashes, exact glossary IDs, input/schema completeness | NONE | `BLOCKED` for corrupted or unauthorized source; invalid generated text `REWORK_REQUIRED` |
+| G1: approved terminology | Versioned `TERMINOLOGY.md`/reviewed concepts are the authority; GPT-6 may propose meanings for new words; human resolves ancient language / school differences | OFF by default for unchanged/approved terms | `TERM_REVIEW` or `HUMAN_HOLD` for unresolved ambiguity |
+| Translator | One GPT-6 source-HV translation, no DeepSeek in normal flow; language model produces claims and supporting quotations but not approvals | NONE | Create candidate immutable `hv_vi` |
+| G2: faithful-HV risk | Deterministic mismatch checks and source-anchored GPT-6 critique; `source_zh + context + glossary + hv_vi` | Atomic `Noul`/limited `Score` flags *possible* omission, reversed conditional/negation, star/palace mismatch | Flag requires exact quoted source support; if unproven `HUMAN_HOLD`; NO model-only semantic PASS |
+| Plain writer | GPT-6 produces `plain_vi` and claim references only after G2 review gate | NONE | Generate new revision, without changing source/HV |
+| G3: claim/readability risk | Code first validates claim IDs, exact source spans and glossary references. GPT-6 repairs specifically supported plain-text errors. | Atomic claim-level `Noul` on unsupported addition, lost negation and materially changed relation; separate readability `Score` only as advisory | Plain-only correction invalidates only G3; unsupported or untraceable claim `HUMAN_HOLD` |
+| Release | Pure code policy + revision hashes + independent human reviewer | NONE | **No automatic publish** |
+
+**Boundaries:** Jev returns judgments and probability distributions, not source quotations, philological authority, labels or release decisions. GPT-6 critic quotations must be checked against the original before any targeted correction. The translator's own self-review is not independent evidence. Ancient text ambiguities such as lone `相` and `申` require historical context or independent human judgment; a high Jev probability never settles a disputed meaning.
+
+### Provisional triage truth table for a controlled test
+
+1. Source corruption or invalid authorization: deterministic `BLOCKED`. Bad generated structure: `REWORK_REQUIRED`, no paid call.
+2. Any known unresolved term, historical conflict, unverifiable source-linked claim, malformed Jev response, missing judgment, or insufficient evidence: `HUMAN_HOLD`. A Jev response failure is never a low-risk score.
+3. In the isolated R02 seeded smoke test, ask Jev (a) risk Noul and (b) ambiguity Noul **for every case**. Hypothesis-only, uncalibrated bands: `ambiguity >= .30` -> `HUMAN_HOLD`; else `risk >= .70` -> `FLAG` / source-quoted review; `risk <= .30` -> `CLEAR` *for smoke-test triage only*; otherwise `REVIEW` / `HUMAN_HOLD`. The `CLEAR` outcome is **not** authorization to publish or proof of correct translation.
+4. Do not set those thresholds as production defaults until an independently labeled historical corpus measures **false negatives on high-severity errors**. An expert may override all numeric gates toward HOLD, never toward automatic approval.
+5. Every Jev call requires a live, explicit grant. Version and fingerprint the input/source, glossary, policy/questions, Jev model, HV and plain separately. Reuse G2 after plain-only edits; any HV edit invalidates G2+G3. Bound retry/revision count, timeouts and total approved USD cap. The current T01 implementation is in-memory only; its per-instance lock is **not** cross-worker durable idempotency.
+
+### Technical interface and cost discipline
+
+- **Real Site verified read-only on 2026-11-02:** `jev_status.ready=true`, pinned status model `typesafe/jev-1.14`, no active fixed 6/min or 60/day limiter. External 429/timeout still possible. This does **not** mean unlimited authorized spend.
+- Site `jev_evaluate` has **1–8 typed questions** per call, `Noul / Choice / Score`, shared inline public `state <=8 KiB`. Group independent questions only when they use the same short relevant state; split at documented bounds, never truncate a claim that could affect judgment.
+- One question = one testable language judgment. Do not ask Jev to choose which text to publish, explain disputed classical characters from memory, generate a translation, or identify the exact bad span. Keep question/spec version in the evidence.
+- Privacy: do not send sensitive birth/chart records through this trial; use synthetic public source. Do not put API keys into `state` or logs.
+
+### R02 seeded 20-case pilot evidence (2026-11-02)
+
+- Fixtures: `scripts/regression/fixtures/translation-r02-seeded-20.json`: 10 G2 and 10 G3 constructed minimal pairs. Breakdown: 8 CLEAN, 9 intentionally corrupted ISSUE, 3 ambiguity HOLD.
+- Reference answers are **assistant-seeded provisional labels, NOT bilingual human expert gold labels**. Synthetic facts/grammar are not a representative ancient-text translation benchmark.
+- Live Jev responses: `docs/vi/REVIEWS/R02_JEV_20_CASES_RAW_2026-11-02.json`; 9 billable requests: all 20 cases received risk Noul and separate ambiguity Noul, and 10 G3 cases additionally received an advisory readability Score. Fixed smoke-test policy results: 9/9 planted issues flagged, 8/8 clean cases clear, 3/3 ambiguity cases held. This is **seeded-set fit only**, not estimated accuracy or calibrated rates. For example, fabricated future-life predictions scored >8/10 for readability while their material-addition risk was near 1.0: readability NEVER overrides grounding risk.
+- Deterministic stored-evidence verification: `scripts/regression/translation-r02-evidence.test.mjs`, wired into `npm test` and `npm run test:r02`. It does **not** call Jev or assert actual production translation correctness.
+- **Outstanding requirement:** independent bilingual/domain specialist must review and approve labels, adding real historical-source cases and hard counterexamples; collect blinded Jev runs on held-out cases. Current fixture cannot be called `gold`.
+- R02 status: design approved and tested at isolated questions level. Production Jev adapter, durable billed-call ledger, cross-worker dedup, claim semantic aligner, general GPT-6 integration and all-repo CI/build remain **unimplemented/unverified**.
 
 ## Problem statement
 
@@ -40,7 +82,7 @@ Các implementation **internal** (không cần tách thành nhiều public modul
 
 **Highest test seam:** `TranslationWorkflow.processSegment/resumeSegment/getEvidence` dùng stub có kết quả Jev cố định. Kiểm tra hành vi từ bên ngoài, không khẳng định đã triển khai.
 
-## Design workflow — 3 Jev checkpoints
+## Legacy V2.2 design workflow — historical reference (R02 overrides Jev role)
 
 ```mermaid
 flowchart TD
@@ -113,12 +155,43 @@ All retry edges above are conditional on the **global circuit breaker** below. N
 
 **Pilot budgets (provisional defaults; should be configurable and signed off per batch):**
 - `max_hv_revisions_per_segment = 3`; `max_plain_revisions_per_segment = 3`.
-- `max_paid_jev_calls_per_segment = 7` for G2/G3 combined; G1 budget separately `max_jev_calls_per_changed_term = 1` unless human authorizes exception.
+- **Không còn hard-cap của Jev-web**: read-only `jev_status` ngày 2026-11-02 xác nhận `rate_limiting_enabled=false`, `requests_per_minute=null`, `requests_per_utc_day=null`. Số 6/phút và 60/ngày trong các review cũ chỉ là lịch sử.
+- `max_paid_jev_calls_per_segment` là **ngân sách do ứng dụng/người dùng phê duyệt theo đợt**, không phải trần cố định của nhà cung cấp. Đề xuất mặc định cho pilot 7 lượt G2/G3 mỗi đoạn; có thể tăng có kiểm soát bằng grant mới và bộ kiểm thử. G1 mặc định một lượt mỗi thuật ngữ thay đổi, ngoại lệ cần approval.
+- Lượt gọi quá grant vẫn `HUMAN_HOLD`, dù upstream không giới hạn tốc độ.
 - `max_jev_calls_per_batch = min(user_authorized_cap, live service capacity)`; `max_cost_usd_per_batch` user-configured, **default 0** until explicit approval.
 - `max_repeated_same_fingerprint = 1`; exact same revision is read from cache, never charged again.
 - Stagnation: two attempts with no substantive edit/clear error correction -> HUMAN_HOLD. Error/429/quota/network/invalid Jev schema -> pause with resumable `HOLD`, **do not retry with charge_authorized unless consent/budget remains valid**.
 - All counters persisted per segment and per batch with idempotency keys. `JevJudgeAdapter` has request fingerprint; worker locks/transaction prevent duplicate charges on concurrent resumes.
-- Site status at review: limit **6 requests/minute, 60/day**; inspect `jev_status` at run time and do not assume quota guarantees capacity.
+- **Không suy diễn không có rate limiter = không thể gặp 429**: OpenRouter, TypeSafe, mạng, tài khoản hoặc hạ tầng vẫn có thể trả 429/503. Dùng `Retry-After` nếu có, pause/resume bằng grant còn hiệu lực, không tự lặp vô hạn; kiểm tra `jev_status` thực tế.
+- Không hardcode hạn mức bên ngoài, nhưng vẫn thực thi an toàn chi phí, số revision, duplicate suppression, timeout và human sign-off.
+
+
+## Expanded error gate — nguồn lỗi quyết định tuyến xử lý
+
+Để tránh quy mọi lỗi thành một `HOLD` không giải thích được, hệ thống tách **loại lỗi** và **trạng thái tiếp tục**, trong khi giữ nguyên nguyên tắc fail-closed. Bảng dưới đây là chính sách triển khai; prototype T01 mới hiện thực hóa **một phần**.
+
+| Nhóm lỗi | Ví dụ | Trạng thái | Hành động có căn cứ |
+| --- | --- | --- | --- |
+| `SOURCE_INTEGRITY` | Hash nguồn sai, nội dung không có quyền dùng, định danh sao/cung gốc bị sửa | **BLOCKED** | Dừng trước Jev; người quản lý nguồn xác minh và nhập lại nguồn bất biến |
+| `INPUT_REPAIRABLE` | Plain text rỗng, danh sách claim thiếu reference, alias chưa khớp | **REWORK_REQUIRED** | Trả về công đoạn sinh dữ liệu/từ điển, sửa bản mới; không gửi payload hỏng cho Jev |
+| `G2_MEANING_ERROR` | Dịch đảo phủ định/đổi sao có chứng cứ trích nguyên văn | **REWORK_HV** | Sửa riêng HV; mất hiệu lực G2/G3 của đoạn |
+| `G3_EXTRA_CLAIM` | Plain thêm dự đoán không có trong source | **REWORK_PLAIN** | Sửa riêng plain; giữ G2 theo hash |
+| `PROVIDER_TRANSIENT` | Upstream 429/502/503, timeout, lỗi kết nối | **RETRYABLE_HOLD** | Ghi mã lỗi và Retry-After nếu có; caller **chủ động** resume, có grant; không tự động gọi vô hạn |
+| `JEV_RESPONSE_SCHEMA` | Thiếu scores/nouls, phân phối sai độ dài, sai dữ liệu | **RETRYABLE_HOLD** một lần | Giữ response/evidence, cho một lượt thử lại có approval; lặp lại thì **HUMAN_HOLD** để sửa adapter/schema |
+| `AUTH_CONFIGURATION` | 401/403, API key hỏng, cấu hình model sai | **HUMAN_HOLD** | Sửa cấu hình/quyền trước khi tiếp tục; không dùng retry tuyến tính |
+| `SEMANTIC_AMBIGUITY` | Nguồn Hán không rõ, khác biệt trường phái, claim không chứng minh được | **HUMAN_HOLD** | Gửi đoạn + nguồn + dị bản cho người duyệt; không tự nâng điểm |
+| `APPLICATION_BUDGET` | Hết grant chi phí / số lượt tối đa của **đợt** | **HUMAN_HOLD** | Báo chi phí và kết quả đã có; chỉ tiếp tục nếu cấp grant mới |
+| `STALE_APPROVAL` | Plain/glossary sửa sau khi duyệt | **HUMAN_HOLD** | Invalidate các checkpoint phụ thuộc, đánh giá bản revision mới |
+
+**Lưu ý:** phân loại một lỗi dữ liệu *không có nghĩa* được phép làm sạch tự động mọi lỗi: sai nguồn hoặc sai phép dùng vẫn là `BLOCKED`. `HUMAN_HOLD`, `RETRYABLE_HOLD` và `REWORK_REQUIRED` đều **không thể xuất bản**. Không chuyển Jev network failure thành `PASS`; không coi `429` là hết quota của Jev-web nếu chưa có bằng chứng nguồn lỗi. Gắn source/error code/attempt/grant vào evidence.
+
+### Graceful degradation và resume
+
+1. Giữ nguyên `source_sha, glossary_sha, hv_sha, plain_sha, gate_spec_sha, request_fingerprint` mỗi lần tạm dừng.
+2. Khi provider có `retryAfterMs`, ưu tiên thời gian đó; khi không có, dùng chính sách backoff có giới hạn ở *scheduler* tương lai. T01 **không có** scheduler hoặc background retry.
+3. Chỉ resume trên cùng revision khi đã xử lý điều kiện lỗi, grant còn hợp lệ và budget chưa hết; khi thông số thay đổi phải chấm lại các gate phụ thuộc.
+4. Audit trả về `last_valid_gate, failure_category, next_action, attempts_spent, authorization_scope`.
+5. Tối thiểu một vòng kiểm thử bằng fake JudgeAdapter cho mỗi loại lỗi; kiểm thử thực tế bằng Jev chỉ sau khi user cấp phép chi phí rõ ràng.
 
 ## GateDecision truth table (fail-closed)
 

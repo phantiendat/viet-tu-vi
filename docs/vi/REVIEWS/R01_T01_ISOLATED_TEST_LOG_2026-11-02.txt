@@ -1,0 +1,142 @@
+T01 ISOLATED CHECK — 2026-11-02
+Source PR: https://github.com/phantiendat/viet-tu-vi/pull/4
+Source code SHA (before review notes): f27d82959e6849fa2c2f12be23d90ee4c7ef7735
+Verbatim Git blob verification:
+26a7508af3aa0801dba27baad5c529e9e87a27b4
+be72f004d08d2ff74a735ef3095803725781709d
+Expected workflow.ts blob: 26a7508af3aa0801dba27baad5c529e9e87a27b4
+Expected translation-g3-loop.test.ts blob: be72f004d08d2ff74a735ef3095803725781709d
+Node: v22.16.0
+TypeScript: Version 5.8.3
+
+Strict isolated typecheck (matching relevant repo tsconfig choices):
+tsc --pretty false --strict --noEmit --target es2017 --module esnext --moduleResolution bundler --esModuleInterop --skipLibCheck --lib dom,dom.iterable,esnext --types node [node typeRoots] workflow.ts translation-g3-loop.test.ts
+TYPECHECK: PASS
+
+Transpile isolated TS files and run built-in Node test runner:
+TAP version 13
+# Subtest: G3 catches unsupported added prediction and rewrites plain Vietnamese only, preserving G2 evidence
+ok 1 - G3 catches unsupported added prediction and rewrites plain Vietnamese only, preserving G2 evidence
+  ---
+  duration_ms: 2.789606
+  type: 'test'
+  ...
+# Subtest: without charge authorization judge is never called and segment held
+ok 2 - without charge authorization judge is never called and segment held
+  ---
+  duration_ms: 0.269245
+  type: 'test'
+  ...
+# Subtest: repeated unchanged rewrite stops; no silent gate bypass
+ok 3 - repeated unchanged rewrite stops; no silent gate bypass
+  ---
+  duration_ms: 0.541264
+  type: 'test'
+  ...
+# Subtest: fake G2 verdict too low pauses and does not call G3
+ok 4 - fake G2 verdict too low pauses and does not call G3
+  ---
+  duration_ms: 0.530878
+  type: 'test'
+  ...
+# Subtest: G3 missing score never counts as approval
+ok 5 - G3 missing score never counts as approval
+  ---
+  duration_ms: 0.442185
+  type: 'test'
+  ...
+# Subtest: the workflow never invokes a real Jev API or publishes content
+ok 6 - the workflow never invokes a real Jev API or publishes content
+  ---
+  duration_ms: 1.384242
+  type: 'test'
+  ...
+# Subtest: exhausted per-segment judge-call cap holds rather than publishing
+ok 7 - exhausted per-segment judge-call cap holds rather than publishing
+  ---
+  duration_ms: 0.435615
+  type: 'test'
+  ...
+# Subtest: source hash mismatch blocks before judge
+ok 8 - source hash mismatch blocks before judge
+  ---
+  duration_ms: 0.232159
+  type: 'test'
+  ...
+# Subtest: malformed Jev response fails closed instead of throwing
+ok 9 - malformed Jev response fails closed instead of throwing
+  ---
+  duration_ms: 0.390898
+  type: 'test'
+  ...
+# Subtest: read-only Jev-web removed fixed quota: a larger explicitly granted batch may use >7 mock evaluations
+ok 10 - read-only Jev-web removed fixed quota: a larger explicitly granted batch may use >7 mock evaluations
+  ---
+  duration_ms: 1.024911
+  type: 'test'
+  ...
+# Subtest: upstream 429 is retryable with retry-after even with Jev-web rate limiter disabled
+ok 11 - upstream 429 is retryable with retry-after even with Jev-web rate limiter disabled
+  ---
+  duration_ms: 0.529356
+  type: 'test'
+  ...
+# Subtest: invalid Jev score shape gets one explicit retry before human escalation
+ok 12 - invalid Jev score shape gets one explicit retry before human escalation
+  ---
+  duration_ms: 0.256095
+  type: 'test'
+  ...
+# Subtest: source-integrity failure is blocked while incomplete translation claims request repair
+ok 13 - source-integrity failure is blocked while incomplete translation claims request repair
+  ---
+  duration_ms: 0.230076
+  type: 'test'
+  ...
+# Subtest: auth error stops for human action, not a blind retry loop
+ok 14 - auth error stops for human action, not a blind retry loop
+  ---
+  duration_ms: 0.224677
+  type: 'test'
+  ...
+# Subtest: explicit Jev INVALID_RESPONSE errors are retryable once and then require human repair
+ok 15 - explicit Jev INVALID_RESPONSE errors are retryable once and then require human repair
+  ---
+  duration_ms: 0.236465
+  type: 'test'
+  ...
+# Subtest: unchanged rejected G2 verdict is not sent to Jev again on resume
+ok 16 - unchanged rejected G2 verdict is not sent to Jev again on resume
+  ---
+  duration_ms: 0.218309
+  type: 'test'
+  ...
+# Subtest: unchanged rejected G3 verdict is not sent to Jev again on resume
+ok 17 - unchanged rejected G3 verdict is not sent to Jev again on resume
+  ---
+  duration_ms: 0.254432
+  type: 'test'
+  ...
+# Subtest: two simultaneous resumes share one in-flight evaluation and one judge charge
+ok 18 - two simultaneous resumes share one in-flight evaluation and one judge charge
+  ---
+  duration_ms: 0.362696
+  type: 'test'
+  ...
+# Subtest: failed writer and unchanged draft do not charge again on resume
+ok 19 - failed writer and unchanged draft do not charge again on resume
+  ---
+  duration_ms: 0.271488
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 76.046521
+
+NOT RUN: full npm ci / full npm test / Next.js build (checkout and registry unavailable; github.com DNS not resolvable, npm registry DNS not resolvable).
