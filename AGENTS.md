@@ -16,7 +16,7 @@
 ## Ownership, review and release
 
 - **Codex owns implementation:** coding, tests, local verification and commits on a review branch. GitHub is the source of truth for code; submit changes as a Draft PR for review.
-- **ChatGPT Web owns independent review:** challenge the diff, apply Ponytail, use Jev when relevant and authorized, and leave review comments on the PR. Jev calls still require the separately approved scope and budget described above.
+- **ChatGPT Web owns independent review:** every technical conclusion, review, implementation proposal or merge recommendation submitted for owner approval must include a real Ponytail Review and an actual Jev-web technical score, with score, model and request ID. Use Jev only with explicit charge authorization and approved bounded usage. If Jev is not authorized, unavailable, over the approved limit or fails, report `REVIEW_BLOCKED` / not scored and make no GO recommendation; never invent a score. Keep review comments on the PR.
 - **Project owner approval is required before merge, deployment or production changes.** A passing test or Draft PR is not that approval.
 - **Do not automatically import historical texts or other classical-source data.** Verify each source's license and permitted use before any import, and obtain project-owner approval.
 - **R02.2 setup only:** `tools/scholarly-evidence-gate/` is a proposal and exchange guide. It does not collect, import, parse or score source data and does not change the charting engine or application.
